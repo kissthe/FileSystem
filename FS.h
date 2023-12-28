@@ -10,6 +10,12 @@
 #define D_BMAP_NUM 20
 using namespace std;
 enum BlockType { INODE_BLOCK, FILE_BLOCK, INDIRECT_BLOCK, INDEX_BLOCK };//定义枚举类型，inode、文件、间接块儿、索引块儿
+
+struct Dir_Index{
+    char name[20];
+    int index;
+};//目录里面存放的单元
+
 struct Disk_Block{
     bool occupied;
     int type;//指明是块儿的类型，是inode还是其它类型，0-inode 1-文件 2-间接块儿 3-索引块儿
@@ -19,7 +25,9 @@ struct Disk_Block{
     union {
         array<char,256> content;//存储文件的内容
         //存储间接块儿，可选择合适的数据结构
+        array<Disk_Block*,64>indirect_block;
         //存储索引块儿，可选择合适的数据结构
+        array<Dir_Index,10>index;
     };
 };//磁盘块儿
 
@@ -51,20 +59,22 @@ private:
     array<Inode,INODE_NUM> inodes_blocks;//存储inodes
 };//磁盘管理模块儿
 
-
 class FileManagement{
 private:
     /*要有一个变量存放当前目录，进入子目录、返回上层目录时需要对应改变
      * 比如可以用当前的目录的inode节点
-     * /
+     */
+     Inode* ope_ptr;//工作指针
 public:
     /*
      * 对文件,目录的一些操作，主要是更改inode属性
      * 新建，修改文件的时候需要对应修改inode属性
      */
-    //add_index()--增加目录表项，传入新建的文件夹/文件名和对应的i_number号
-    //delete_index()--删除目录表项,传入删除的文件夹/文件名和对应的i_number号
-   //get_dir();--获取当前目录名
+    FileManagement(Inode*root);//构造函数
+    void add_index(string file_name,int i_number);
+    void delete_index(string file_name,int i_number);
+    string get_dir();//返回当前的目录名
+
 };
 
 class User {
