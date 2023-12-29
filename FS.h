@@ -55,6 +55,7 @@ public:
      * 对文件,目录的一些操作，主要是更改inode属性
      * 新建，修改文件的时候需要对应修改inode属性
      */
+    string input_buffer;//输入缓冲区
     FileManagement(Inode*root);//构造函数
     bool delete_index(string file_name,int i_number);
     bool add_index(int i_number, BlockType blockType, string file_name);
@@ -68,7 +69,8 @@ public:
 class Disk {
 
 private:
-    string file_buffer;//读取的文件内容放在这里就行
+    string output_buffer;//读取的文件内容放在这里就行,输出缓冲区
+
     const int blockCount;  // 磁盘块数量（常量，不可修改）
     const int blockSize;   // 每个磁盘块的大小（常量，不可修改）
     bool i_bitmap[I_BMAP_NUM];
@@ -81,7 +83,7 @@ public:
     Disk(int blockCount, int blockSize);
     ~Disk();
 
-    int allocateBlock(int i_number,BlockType type,string file_name);//返回inode号
+    int allocateBlock(int i_number,BlockType type,string file_name,string* input_buffer);//返回inode号
     bool deleteBlock();
     void displayDiskStatus();
     bool modify_file_name(string new_name);//更改名称
