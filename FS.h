@@ -56,6 +56,8 @@ public:
      * 新建，修改文件的时候需要对应修改inode属性
      */
     string input_buffer;//输入缓冲区
+    Dir_Index dir_input_buffer[20];//目录项输入缓冲区
+    
     FileManagement(Inode*root);//构造函数
     bool delete_index(string file_name,int i_number);
     bool add_index(int i_number, BlockType blockType, string file_name);
@@ -69,7 +71,7 @@ public:
 class Disk {
 
 private:
-    string output_buffer;//读取的文件内容放在这里就行,输出缓冲区
+
 
     const int blockCount;  // 磁盘块数量（常量，不可修改）
     const int blockSize;   // 每个磁盘块的大小（常量，不可修改）
@@ -78,18 +80,21 @@ private:
     Disk_Block data_blocks[DATA_BLOCK_NUM];  // 固定大小的数组，模拟磁盘块
     Inode inodes_blocks[INODE_NUM];//固定大小的数组，模拟存放inodes的磁盘块儿
     int arr[20]={0};//回收站，如果哪个节点被暂时删除，就把它的inode中的recycled字段置为true，并把inode号放入回收站
+
 public:
+    string output_buffer;//读取的文件内容放在这里就行,输出缓冲区
+    Dir_Index dir_output_buffer[20];//读取的目录项放在这里
 
     Disk(int blockCount, int blockSize);
     ~Disk();
 
-    int allocateBlock(int i_number,BlockType type,string file_name,string* input_buffer);//返回inode号
+    int allocateBlock(int i_number,BlockType type,string file_name,string* input_buffer= nullptr);//返回inode号
     bool deleteBlock();
     void displayDiskStatus();
     bool modify_file_name(string new_name);//更改名称
     bool modify_file_recycled();//把recycled改为true
-    string read_file(int i_number);//读取普通文件
-
+    void read_file(int i_number);//读取普通文件
+    void read_dir(int i_number);//读取目录项
 
 };//磁盘管理模块儿
 
