@@ -25,3 +25,9 @@ string Disk::modify_time() {
     std::strftime(buffer, bufferSize, "%Y/%m/%d %H:%M", localTime);
     return buffer;//返回当前日期时间字符串
 }
+
+bool Disk::modify_file_name(int i_number, string new_name) {
+    /*
+     * 把对应文件/文件夹的inode信息更改
+     */
+}
