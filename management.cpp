@@ -69,5 +69,9 @@ void FileManagement::print_current_dir() {
     cout<<current_dir;
 }
 
+bool FileManagement::rename_file(int i_number, string new_name) {
+    return disk->modify_file_name(i_number,new_name);
+}
+
 
 

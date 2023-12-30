@@ -1,6 +1,7 @@
-#include <iostream>
+#include "FS.h"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    Disk disk1();
+    FileManagement my_file();
     return 0;
 }

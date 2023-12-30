@@ -82,6 +82,7 @@ public:
     void sort_index();//将目录项排序
 
     void print_current_dir();//打印出当前的工作目录
+    bool rename_file(int i_number,string new_name);
 
 };
 
@@ -108,7 +109,7 @@ public:
     bool deleteBlock();
     string modify_time();//修改文件时间，只有保存到磁盘的时候才需要修改
     void displayDiskStatus();
-    bool modify_file_name(string new_name);//更改名称
+    bool modify_file_name(int i_number,string new_name);//更改名称
     bool modify_file_recycled();//把recycled改为true
     void read_file(int i_number);//读取普通文件
     void read_dir(int i_number);//读取目录项
