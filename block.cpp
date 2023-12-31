@@ -31,3 +31,24 @@ bool Disk::modify_file_name(int i_number, string new_name) {
      * 把对应文件/文件夹的inode信息更改
      */
 }
+
+void Disk::add_index(int i_number) {
+    /*
+     * 添加子目录的话不用重新分配
+     */
+    for(int i=0;i<12;i++){
+        if(inodes_blocks[i_number].dir_arr[i]== nullptr){
+            //这里需要重新找一个空闲块
+            //inodes_blocks[i_number].dir_arr[i]=;
+
+            //处理完毕后break
+
+        } else{
+            if(inodes_blocks[i_number].dir_arr[i]->index.size()<10){
+                //处理，注意此事要写入inode中
+            }
+        }
+
+
+    }
+}
