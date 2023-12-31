@@ -106,7 +106,7 @@ public:
     ~Disk();
 
     int allocateBlock(int i_number,BlockType type,string file_name,string* input_buffer= nullptr);//返回inode号
-    bool deleteBlock();
+    bool deleteBlock(int i_number);
     string modify_time();//修改文件时间，只有保存到磁盘的时候才需要修改
     void displayDiskStatus();
     bool modify_file_name(int i_number,string new_name);//更改名称
