@@ -21,16 +21,13 @@ struct Dir_Index{
 
 struct Disk_Block{
     bool occupied;
-    int type;//指明是块儿的类型，是inode还是其它类型，0-inode 1-文件 2-间接块儿 3-索引块儿
     BlockType blockType;//磁盘存储的是哪种类型的数据
     int block_id;//这一块儿属于哪一个文件
     int block_size;
     union {
         char content[256];//存储文件的内容
-        //存储间接块儿，可选择合适的数据结构
-        Disk_Block* indirect_block[64];
-        //存储索引块儿，可选择合适的数据结构
-        Dir_Index index[10];
+        Disk_Block* indirect_block[32];  //存储间接块儿
+        Dir_Index index[10];   //存放目录内容
     };
 };//磁盘块儿
 
@@ -43,6 +40,8 @@ struct Inode{
     string modified_time;//修改时间
     int file_block;//分配了多少块儿
     vector<Disk_Block*>disk_pointer;//磁盘指针，会有指向间接块儿的指针
+    vector<Disk_Block*>disk_pointer_pointer;//磁盘指针，指向索引块指针
+    Disk_Block* direct_block[12];//指向直接块
 };//inode节点
 class Disk;
 
@@ -105,8 +104,9 @@ public:
     Disk(int blockCount, int blockSize);
     ~Disk();
 
-    int allocateBlock(int i_number,BlockType type,string file_name,string* input_buffer= nullptr);//返回inode号
-    bool deleteBlock(int i_number);
+    int allocateBlock(int i_number,string file_name,string* input_buffer= nullptr);//返回inode号，分配文件
+    int allocateBlock_Dir(int i_number, string file_name, Dir_Index dir_input_buffer[20]);//返回inode号，分配目录
+    bool deleteBlock();
     string modify_time();//修改文件时间，只有保存到磁盘的时候才需要修改
     void displayDiskStatus();
     bool modify_file_name(int i_number,string new_name);//更改名称
