@@ -17,27 +17,27 @@
 using namespace std;
 enum BlockType { INODE_BLOCK, FILE_BLOCK, INDIRECT_BLOCK, INDEX_BLOCK };//定义枚举类型，inode、文件、间接块儿、索引块儿
 
-struct Dir_Index{
-    char name[20];
-    int index;
-};//目录里面存放的单元
+//struct Dir_Index{
+//    //char name[20];
+//    int index;
+//};//目录里面存放的单元
 
 struct Disk_Block{
     bool occupied;
     BlockType blockType;//磁盘存储的是哪种类型的数据
     int block_id;//这一块儿属于哪一个文件
     int block_size;
-    int index_number=0;//意思就是存储的index的数量
+    int index_number=1;//意思就是存储的index的数量，默认为1，因为至少存放有上级目录的条目
     union {
         char content[256];//存储文件的内容
         Disk_Block* indirect_block[32];  //存储间接块儿
-        Dir_Index index[10];   //存放目录内容,这里不容易知道存放多少个
+        int index[64];   //存放目录内容,这里不容易知道存放多少个
     };
 };//磁盘块儿
 
 struct Inode{
     int i_number;//文件的低级名称
-    bool recycled;//文件是否放入回收站
+    bool recycled;//文件是否放入回收站，放入回收站的话就无法读取
     bool file_type;//文件类型
     int file_size;//文件大小
     string file_name;//文件名
@@ -68,10 +68,10 @@ public:
      */
     string input_buffer;//输入缓冲区
     //Inode dir_input_buffer[20];//目录项输入缓冲区,增加目录时注意也要在当前目录下增加条目
-    vector<Dir_Index> dir_input_buffer;
+    vector<Inode> dir_input_buffer;
 
-    FileManagement(Inode*root);//构造函数
-    bool remove(string file_name,int i_number);
+    FileManagement(Disk* disk);//构造函数
+    bool remove(string file_name);
     bool create(bool file_type, string file_name);
     string get_using_dir();//返回当前的目录名
     string get_file_content();
@@ -79,10 +79,8 @@ public:
 
     string cd_dir(string file_name);//进入目录
 
-    bool recycle_file(int i_number);//放入回收站
+    bool recycle_file(string file_name);//放入回收站
 
-    void add_index(string dir_name);//增加目录项
-    void delete_index();//删除目录项
     void sort_index();//将目录项排序
 
     void print_current_dir();//打印出当前的工作目录
@@ -105,18 +103,18 @@ private:
 
 public:
     string output_buffer;//读取的文件内容放在这里就行,输出缓冲区
-    vector<Dir_Index> dir_output_buffer;//读取的目录项放在这里
+    vector<Inode> dir_output_buffer;//读取的目录项放在这里
 
     Disk() ;
     ~Disk();
 
     int allocateBlock_File(string file_name,string* input_buffer= nullptr);//返回inode号，分配文件
-    int allocateBlock_Dir( string file_name, vector<Dir_Index>dir_input_buffer);//返回inode号，分配目录
+    int allocateBlock_Dir( string file_name, vector<Inode>dir_input_buffer);//返回inode号，分配目录
     bool deleteBlock(int i_number);
     string modify_time();//修改文件时间，只有保存到磁盘的时候才需要修改
     void displayDiskStatus();
     bool modify_file_name(int i_number,string new_name);//更改名称
-    bool modify_file_recycled();//把recycled改为true
+    bool modify_file_recycled(int i_number);//把recycled改为true
     void read_file(int i_number);//读取普通文件
     void read_dir(int i_number);//读取目录项
 
@@ -131,6 +129,7 @@ public:
     vector<int> findFreeDataBlocks(int num_blocks);
 
     void add_index_in_dir(int pi_number,int ci_number);
+    void delete_index_in_dir(int pi_number,int ci_number);
 };//磁盘管理模块儿
 
 
