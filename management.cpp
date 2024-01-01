@@ -17,8 +17,22 @@ void FileManagement::print_current_dir() {
     cout<<current_dir;
 }
 
-bool FileManagement::rename_file(int i_number, string new_name) {
-    return disk->modify_file_name(i_number,new_name);
+bool FileManagement::rename_file(string old_name, string new_name) {
+    /*
+     * 修改文件名
+     */
+    for(auto i:dir_input_buffer){
+        if(old_name==i.name){
+            for(auto j:dir_input_buffer){
+                if(new_name==j.name){
+                    cout<<"重复"<<endl;
+                    return false;
+                }
+            }
+            return disk->modify_file_name(i.index,new_name);
+        }
+    }
+    return false;
 }
 
 bool FileManagement::create(bool file_type,string file_name) {
