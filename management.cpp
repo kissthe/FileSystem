@@ -1,17 +1,5 @@
 #include "FS.h"
-void FileManagement::add_index(int i_number) {
-    /*
-     *调用磁盘新写的函数即可
-     */
 
-
-}
-
-void FileManagement::delete_index() {
-    /*
-     * 删除索引项，可以使用二分查找并且删除
-     */
-}
 
 void FileManagement::print_current_dir() {
     cout<<current_dir;
@@ -22,14 +10,14 @@ bool FileManagement::rename_file(string old_name, string new_name) {
      * 修改文件名
      */
     for(auto i:dir_input_buffer){
-        if(old_name==i.name){
+        if(old_name==i.file_name){
             for(auto j:dir_input_buffer){
-                if(new_name==j.name){
+                if(new_name==j.file_name){
                     cout<<"重复"<<endl;
                     return false;
                 }
             }
-            return disk->modify_file_name(i.index,new_name);
+            return disk->modify_file_name(i.i_number,new_name);
         }
     }
     return false;
@@ -40,20 +28,35 @@ bool FileManagement::create(bool file_type,string file_name) {
      * 新建文件夹、文件其实都是相当于让磁盘分配空间，因此直接调用磁盘的函数即可
      * true代表普通文件,false代表目录文件
      */
+    int ci_number;
     if(file_type){
-        disk->allocateBlock_File(file_name);
+       ci_number= disk->allocateBlock_File(file_name);
+       disk->add_index_in_dir(ope_inode,ci_number);
     } else{
-        disk->allocateBlock_Dir(file_name);
+       ci_number= disk->allocateBlock_Dir(file_name,dir_input_buffer);
+        disk->add_index_in_dir(ope_inode,ci_number);
     }
 }
 
-bool FileManagement::remove(string file_name, int i_number) {
+bool FileManagement::remove(string file_name) {
     /*
      * 回收磁盘空间，删除对应inode节点
      */
+    for(auto i:dir_input_buffer){
+        if(i.file_name==file_name){
+            disk->delete_index_in_dir(ope_inode,i.i_number);
+            return disk->deleteBlock(i.i_number);
+        }
+    }
+    return false;
 }
 bool FileManagement::recycle_file(string file_name)  {
-        disk->modify_file_recycled();
+    for(auto i:dir_input_buffer){
+        if(i.file_name==file_name){
+            return disk->modify_file_recycled(i.i_number);
+        }
+    }
+    return false;
 }
 
 string FileManagement::get_dir_content(int i_number) {
@@ -102,10 +105,12 @@ string FileManagement::cd_dir(string file_name) {
 bool compareByName(const Inode& a, const Inode& b) {
     return a.file_name[0] < b.file_name[0];
 }
+
 // 按照文件大小进行比较
 bool compareBySize(const Inode& a, const Inode& b) {
     return a.file_size < b.file_size;
 }
+
 // 按照修改日期进行比较
 bool compareByModifiedTime(const Inode& a, const Inode& b) {
     return a.modified_time.compare(b.modified_time) < 0;
@@ -118,25 +123,23 @@ void FileManagement::sort_index(int choice) {
      */
     switch (choice) {
         case 1:
-            sort(disk->dir_output_buffer, disk->dir_output_buffer + 20, compareByName);
+            sort(disk->dir_output_buffer.begin(), disk->dir_output_buffer.end(), compareByName);
             break;
         case 2:
-            sort(disk->dir_output_buffer, disk->dir_output_buffer + 20, compareBySize);
+            sort(disk->dir_output_buffer.begin(), disk->dir_output_buffer.end(), compareBySize);
             break;
         case 3:
-            sort(disk->dir_output_buffer, disk->dir_output_buffer + 20, compareByModifiedTime);
+            sort(disk->dir_output_buffer.begin(), disk->dir_output_buffer.end(), compareByModifiedTime);
             break;
     }
 }
 
-FileManagement::FileManagement(Inode* root) : ope_inode(root->i_number), parent_inode(0), disk(nullptr), dir_content(""), file_content(""), current_dir("") {
-    // 在构造函数中可以进行其他初始化工作
-    // 例如，对输入缓冲区和目录项输入缓冲区进行初始化
-    // 你可能还需要初始化其他成员，具体取决于你的设计需求
-    for (int i = 0; i < 20; ++i) {
-        dir_input_buffer[i].index = 0;
-        // 对其他成员的初始化
-    }
+
+FileManagement::FileManagement(Disk*root):disk(root){
+    //刚开始工作在根目录
+    ope_inode=0;
+    parent_inode=0;
+    current_dir="/";
 }
 
 // 为了示例目的，这里没有对 disk 进行初始化
