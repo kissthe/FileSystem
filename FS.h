@@ -43,7 +43,7 @@ struct Inode{
     string modified_time;//修改时间
     int file_block;//分配了多少块儿
     vector<Disk_Block*>disk_pointer;//磁盘指针，会有指向间接块儿的指针
-    vector<Disk_Block*>disk_pointer_pointer;//磁盘指针，指向索引块指针
+    //vector<Disk_Block*>disk_pointer_pointer;//磁盘指针，指向索引块指针
     Disk_Block* direct_block[12];//指向直接块
 };//inode节点
 class Disk;
