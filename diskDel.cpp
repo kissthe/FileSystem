@@ -81,7 +81,6 @@ void Disk::displayDiskStatus() {
 		// 找到一个非空闲的inode
 		if (d_bitmap[i]) {
 			data_memory_size = sizeof(data_blocks[i].occupied) +
-				sizeof(data_blocks[i].occupied) +
 				sizeof(data_blocks[i].blockType) +
 				sizeof(data_blocks[i].block_id) +
 				sizeof(data_blocks[i].block_size);
