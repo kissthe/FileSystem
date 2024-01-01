@@ -1,12 +1,9 @@
 #include "FS.h"
-#include <iostream>
-#include <vector>
-#include <cstring>
-#include <math.h>
-using namespace std;
+
 
 // 删除一个文件所有被占用的磁盘块
 bool Disk::deleteBlock(int i_number) {
+
 	// 查找该i_number所对应的inode
 	// 遍历inode位视图寻找非空闲的inode
 	int inode_id = -1;//记录找到的inode的下标
@@ -84,7 +81,7 @@ void Disk::displayDiskStatus() {
 		// 找到一个非空闲的inode
 		if (d_bitmap[i]) {
 			data_memory_size = sizeof(data_blocks[i].occupied) +
-				sizeof(data_blocks[i].type) +
+				sizeof(data_blocks[i].occupied) +
 				sizeof(data_blocks[i].blockType) +
 				sizeof(data_blocks[i].block_id) +
 				sizeof(data_blocks[i].block_size);

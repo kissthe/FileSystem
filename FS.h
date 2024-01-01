@@ -7,6 +7,9 @@
 #include <ctime>
 #include <iomanip>
 #include <chrono>
+#include <algorithm>
+#include <cstring>
+#include <cmath>
 #define INODE_NUM 20
 #define I_BMAP_NUM 20
 #define D_BMAP_NUM 20
@@ -67,7 +70,7 @@ public:
 
     FileManagement(Inode*root);//构造函数
     bool remove(string file_name,int i_number);
-    bool create(int i_number, BlockType blockType, string file_name);
+    bool create(bool file_type, string file_name);
     string get_using_dir();//返回当前的目录名
     string get_file_content();
     string get_dir_content(int i_number);//获取当下的目录信息，之所以有返回值是因为要返回给GUI那边
@@ -83,6 +86,7 @@ public:
     void print_current_dir();//打印出当前的工作目录
     bool rename_file(int i_number,string new_name);
 
+    void sort_index(int choice);
 };
 
 class Disk {
@@ -101,12 +105,12 @@ public:
     string output_buffer;//读取的文件内容放在这里就行,输出缓冲区
     Inode dir_output_buffer[20];//读取的目录项放在这里
 
-    Disk(int blockCount, int blockSize);
+    Disk() ;
     ~Disk();
 
-    int allocateBlock(int i_number,string file_name,string* input_buffer= nullptr);//返回inode号，分配文件
-    int allocateBlock_Dir(int i_number, string file_name, Dir_Index dir_input_buffer[20]);//返回inode号，分配目录
-    bool deleteBlock();
+    int allocateBlock_File(string file_name,string* input_buffer= nullptr);//返回inode号，分配文件
+    int allocateBlock_Dir( string file_name, Dir_Index dir_input_buffer[20]);//返回inode号，分配目录
+    bool deleteBlock(int i_number);
     string modify_time();//修改文件时间，只有保存到磁盘的时候才需要修改
     void displayDiskStatus();
     bool modify_file_name(int i_number,string new_name);//更改名称
@@ -116,6 +120,13 @@ public:
 
 
 
+    int findFreeDataBlock();
+
+    vector<int> findFreeInodes(int num_inodes);
+
+    int findFreeInode();
+
+    vector<int> findFreeDataBlocks(int num_blocks);
 };//磁盘管理模块儿
 
 

@@ -1,6 +1,5 @@
-#include <FS.h>
-#include <cstring>
-#include <math.h>
+#include "FS.h"
+
 using namespace std;
 
 // 函数声明区
@@ -9,12 +8,17 @@ int findFreeDataBlock();
 vector<int> findFreeDataBlocks(int num_blocks);
 
 // 文件的分配函数
-int Disk::allocateBlock_File(int i_number, string file_name, string* input_buffer)
+int Disk::allocateBlock_File(string file_name, string* input_buffer)
 {
+    if(input_buffer== nullptr){
+        cout<<"pointer to input_buffer is null"<<endl;
+        exit(0);
+    }
     int block_id = -1;
-
     int length = input_buffer->length(); // 缓冲区数据长度 
-    int block_size = 256; // 单个数据块256字节
+    //int block_size = 256; // 单个数据块256字节
+    int block_size = blockSize;
+
     double num_blocks = (length + block_size - 1) / block_size; // 计算需要多少个数据块
     int num_blocks_rounded = ceil(num_blocks); // 向上取整
 
@@ -58,6 +62,8 @@ int Disk::allocateBlock_File(int i_number, string file_name, string* input_buffe
 
   //}
 
+  //---------------------分配文件内容------------------------------
+
         // 如果缓冲区有内容，计算文件大小准备分配
         int length = input_buffer->length();
 
@@ -66,20 +72,21 @@ int Disk::allocateBlock_File(int i_number, string file_name, string* input_buffe
         }
 
         // 分配数据块
-        int remaining_blocks = num_blocks_rounded;
+        int remaining_blocks = num_blocks_rounded;//数据块的个数
         int block_offset = 0;
         int count = 0;
 
         // 分配数据块
-        int remaining_blocks = num_blocks_rounded;
+        //int remaining_blocks = num_blocks_rounded;
         int num_blocks_to_allocate = min(remaining_blocks, 12); // 最多分配12个直接块
 
         // 分配 num_blocks_to_allocate 个直接块
         vector<int> block_ids = findFreeDataBlocks(num_blocks_to_allocate);
+
         if (block_ids.size() < num_blocks_to_allocate)
         {
             cout << "没有足够的可用空闲数据块。" << endl;
-            return -1;
+            return -1;//退出该函数
         }
 
         for (int i = 0; i < num_blocks_to_allocate; i++)
@@ -92,8 +99,8 @@ int Disk::allocateBlock_File(int i_number, string file_name, string* input_buffe
             // 更新数据块的属性
             data_blocks[block_id].occupied = true;
             data_blocks[block_id].blockType = FILE_BLOCK;
-            data_blocks[block_id].block_id = i_number;
-            data_blocks[block_id].block_size = blockSize;
+            //data_blocks[block_id].block_id = i_number;
+            //data_blocks[block_id].block_size = blockSize;
 
             // 将文件内容从输入缓冲区复制到数据块中
             if (input_buffer != nullptr) {
@@ -127,17 +134,22 @@ int Disk::allocateBlock_File(int i_number, string file_name, string* input_buffe
             }
             // 标记数据块为已占用
             d_bitmap[index_block_id2] = true;
+
+            int indirect_block_id2=index_block_id2;
             //修改间接块的信息
             data_blocks[indirect_block_id2].occupied = true;
             data_blocks[indirect_block_id2].blockType = INDIRECT_BLOCK; // 间接块
             data_blocks[indirect_block_id2].block_id = i_number;
             data_blocks[indirect_block_id2].block_size = blockSize;
+
             // 将分配的间接块的指针添加到inode块信息中
             inodes_blocks[1].disk_pointer.push_back(&data_blocks[indirect_block_id2]);
             //分配数据块
+
             //1.计算需要几个数据块存储数据
             int num_blocks_to_allocate2 = min(remaining_blocks, 32); // 最多分配32个数据块
-            // 分配 num_blocks_to_allocate 个直接块
+
+            // 分配 num_blocks_to_allocate 个间接块
             vector<int> block_ids = findFreeDataBlocks(num_blocks_to_allocate2);
             if (block_ids.size() < num_blocks_to_allocate2)
             {
@@ -166,9 +178,8 @@ int Disk::allocateBlock_File(int i_number, string file_name, string* input_buffe
 
                 }
 
-
                 // 将分配的数据块的指针添加到间接块中
-                data_blocks[indirect_block_id2].direct_block[i] = &data_blocks[block_id2];
+                data_blocks[indirect_block_id2].indirect_block[i] = &data_blocks[block_id2];
             }
 
             remaining_blocks -= num_blocks_to_allocate2;
@@ -333,6 +344,9 @@ int Disk::findFreeDataBlock()
 
 vector<int> Disk::findFreeDataBlocks(int num_blocks)
 {
+    /*
+     * 在位视图中寻找空余的块儿，找到足够的块儿的话就返回这些块儿的号
+     */
     vector<int> free_blocks;
 
     // 遍历数据块位视图

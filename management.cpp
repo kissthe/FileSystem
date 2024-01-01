@@ -21,12 +21,16 @@ bool FileManagement::rename_file(int i_number, string new_name) {
     return disk->modify_file_name(i_number,new_name);
 }
 
-bool FileManagement::create(int i_number,bool file_type,string file_name) {
+bool FileManagement::create(bool file_type,string file_name) {
     /*
      * 新建文件夹、文件其实都是相当于让磁盘分配空间，因此直接调用磁盘的函数即可
+     * true代表普通文件,false代表目录文件
      */
-    disk->allocateBlock(i_number,blockType,file_name);
-    disk->allocateBlock(i_number,file_type,file_name);
+    if(file_type){
+        disk->allocateBlock_File(file_name);
+    } else{
+        disk->allocateBlock_Dir(file_name);
+    }
 }
 
 bool FileManagement::remove(string file_name, int i_number) {
@@ -110,3 +114,17 @@ void FileManagement::sort_index(int choice) {
             break;
     }
 }
+
+FileManagement::FileManagement(Inode* root) : ope_inode(root->i_number), parent_inode(0), disk(nullptr), dir_content(""), file_content(""), current_dir("") {
+    // 在构造函数中可以进行其他初始化工作
+    // 例如，对输入缓冲区和目录项输入缓冲区进行初始化
+    // 你可能还需要初始化其他成员，具体取决于你的设计需求
+    for (int i = 0; i < 20; ++i) {
+        dir_input_buffer[i].index = 0;
+        // 对其他成员的初始化
+    }
+}
+
+// 为了示例目的，这里没有对 disk 进行初始化
+// 你可能需要根据实际情况在构造函数中进行 disk 的初始化
+
