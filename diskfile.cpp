@@ -18,7 +18,7 @@ vector<int> findFreeDataBlocks(int num_blocks);
 // 文件的分配函数
 int Disk::allocateBlock_File(string file_name, string* input_buffer)
 {
-    if(input_buffer== nullptr){
+    if( input_buffer == nullptr ){
         cout<<"pointer to input_buffer is null"<<endl;
         exit(0);
     }
@@ -30,265 +30,216 @@ int Disk::allocateBlock_File(string file_name, string* input_buffer)
     double num_blocks = (length + block_size - 1) / block_size; // 计算需要多少个数据块
     int num_blocks_rounded = ceil(num_blocks); // 向上取整
 
-    // 判断需要分配几个inode
-
-    // 默认分配一个inode,一个inode可以记录12个直接块
+    // 默认分配一个inode（约定一共15个指针，前12个直接索引，第13个一级间接索引，第14个二级间接索引，第15个三级间接索引）
     int num_inodes = 1;
-    if (num_blocks_rounded > 12)
-    {
-        // 需要分配一个间接块的inode，一个存12个直接块的inode
-        num_inodes = 2;
-    }
-    if (num_blocks_rounded > 12 + 32)
-    {
-        // 需要分配一个索引块的inode，一个存12个直接块的inode,多个间接块的inode
-        num_inodes = 1 + 1 + ceil((num_blocks_rounded - 12) / 32.0);
-    }
 
     // 分配所需的inode
-    vector<int> inode_ids = findFreeInodes(num_inodes);
-    if (inode_ids.size() < num_inodes)
+    int inode_id = findFreeInode();
+    if (inode_id == -1)
     {
         cout << "没有足够的可用空闲inode。" << endl;
         return -1;
     }
 
-    for (int i = 0; i < num_inodes; i++)
+    // 标记inode为已占用
+    i_bitmap[inode_id] = true;
+
+    // 更新inode的属性
+    inodes_blocks[inode_id].i_number = inode_id;
+    inodes_blocks[inode_id].recycled = false;
+    inodes_blocks[inode_id].file_type = 0;//文件类型
+    inodes_blocks[inode_id].file_size = 0;
+    inodes_blocks[inode_id].file_name = file_name;
+    //inodes_blocks[inode_id].file_block = 0;
+
+//}
+
+//---------------------分配文件内容------------------------------
+
+    // 如果缓冲区有内容，计算文件大小准备分配
+    int length = input_buffer->length();
+
+    if (length) {
+        inodes_blocks[inode_id].file_size = length;
+    }
+
+    // 分配数据块
+    int remaining_blocks = num_blocks_rounded;//数据块的个数
+    int block_offset = 0;
+    int count = 0;
+
+    int num_blocks_to_allocate = min(remaining_blocks, 12); // 最多分配12个直接块
+
+    // 分配 num_blocks_to_allocate 个直接块
+    vector<int> block_ids = findFreeDataBlocks(num_blocks_to_allocate);
+
+    if (block_ids.size() < num_blocks_to_allocate)
     {
-        int inode_id = inode_ids[i];
+        cout << "没有足够的可用空闲数据块。" << endl;
+        return -1;//退出该函数
+    }
 
-        // 标记inode为已占用
-        i_bitmap[inode_id] = true;
+    for (int i = 0; i < num_blocks_to_allocate; i++)
+    {
+        int block_id = block_ids[i];
 
-        // 更新inode的属性
-        inodes_blocks[inode_id].i_number = i_number;
-        inodes_blocks[inode_id].recycled = false;
-        inodes_blocks[inode_id].file_type = 0;//文件类型
-        inodes_blocks[inode_id].file_size = 0;
-        inodes_blocks[inode_id].file_name = file_name;
-        //inodes_blocks[inode_id].file_block = 0;
+        // 标记数据块为已占用
+        d_bitmap[block_id] = true;
 
-  //}
+        // 更新数据块的属性
+        data_blocks[block_id].occupied = true;
+        data_blocks[block_id].blockType = FILE_BLOCK;
+        //data_blocks[block_id].block_id = i_number;
+        //data_blocks[block_id].block_size = blockSize;
 
-  //---------------------分配文件内容------------------------------
-
-        // 如果缓冲区有内容，计算文件大小准备分配
-        int length = input_buffer->length();
-
-        if (length) {
-            inodes_blocks[inode_id].file_size = length;
+        // 将文件内容从输入缓冲区复制到数据块中
+        if (input_buffer != nullptr) {
+            // 假设 content 是数据块的内容缓冲区
+            strcpy(data_blocks[block_id].content, input_buffer->c_str());
+            inodes_blocks[inode_id].file_size = input_buffer->size();
         }
 
-        // 分配数据块
-        int remaining_blocks = num_blocks_rounded;//数据块的个数
-        int block_offset = 0;
-        int count = 0;
+        // 更新inode的磁盘指针，将分配的数据块的指针添加到对应的inode的磁盘指针中
+        inodes_blocks[inode_id].direct_block[i] = &data_blocks[block_id];
+    }
 
-        // 分配数据块
-        //int remaining_blocks = num_blocks_rounded;
-        int num_blocks_to_allocate = min(remaining_blocks, 12); // 最多分配12个直接块
+    remaining_blocks -= num_blocks_to_allocate;
 
-        // 分配 num_blocks_to_allocate 个直接块
-        vector<int> block_ids = findFreeDataBlocks(num_blocks_to_allocate);
+    if (0 < remaining_blocks <= 32) //需要分配一个一级间接块
+    {
+        // 分配一个间接块
+        int indirect_block_id = findFreeDataBlock();
+        if (indirect_block_id == -1) {
+            cout << "没有可用的空闲数据块。" << endl;
+            return -1;
+        }
+        // 标记数据块为已占用
+        d_bitmap[indirect_block_id] = true;
 
-        if (block_ids.size() < num_blocks_to_allocate)
+        //修改间接块的信息
+        data_blocks[indirect_block_id].occupied = true;
+        data_blocks[indirect_block_id].blockType = INDIRECT_BLOCK; // 间接块
+        data_blocks[indirect_block_id].block_id = inode_id;
+        data_blocks[indirect_block_id].block_size = blockSize;
+
+        // 将分配的间接块的指针添加到inode块信息中
+        inodes_blocks[inode_id].disk_pointer.push_back(&data_blocks[indirect_block_id]);
+        //分配数据块
+
+        //计算需要几个数据块存储数据
+        int num_blocks_to_allocate2 = min(remaining_blocks, 32); // 最多分配32个数据块
+
+        // 分配 num_blocks_to_allocate2 个数据块
+        vector<int> block_ids = findFreeDataBlocks(num_blocks_to_allocate2);
+        if (block_ids.size() < num_blocks_to_allocate2)
         {
             cout << "没有足够的可用空闲数据块。" << endl;
-            return -1;//退出该函数
+            return -1;
         }
 
-        for (int i = 0; i < num_blocks_to_allocate; i++)
+        for (int i = 0; i < num_blocks_to_allocate2; i++)
         {
-            int block_id = block_ids[i];
+            int block_id2 = block_ids[i];
 
             // 标记数据块为已占用
-            d_bitmap[block_id] = true;
+            d_bitmap[block_id2] = true;
 
             // 更新数据块的属性
-            data_blocks[block_id].occupied = true;
-            data_blocks[block_id].blockType = FILE_BLOCK;
-            //data_blocks[block_id].block_id = i_number;
-            //data_blocks[block_id].block_size = blockSize;
+            data_blocks[block_id2].occupied = true;
+            data_blocks[block_id2].blockType = FILE_BLOCK;
+            data_blocks[block_id2].block_id = inode_id;
+            data_blocks[block_id2].block_size = blockSize;
 
             // 将文件内容从输入缓冲区复制到数据块中
             if (input_buffer != nullptr) {
                 // 假设 content 是数据块的内容缓冲区
-                strcpy(data_blocks[block_id].content, input_buffer->c_str());
+                strcpy(data_blocks[block_id2].content, input_buffer->c_str());
                 inodes_blocks[inode_id].file_size = input_buffer->size();
+
             }
 
-            // 更新inode的磁盘指针，将分配的数据块的指针添加到对应的inode的磁盘指针中
-            inodes_blocks[inode_id].direct_block[i] = &data_blocks[block_id];
+            // 将分配的数据块的指针添加到间接块中
+            data_blocks[indirect_block_id].indirect_block[i] = &data_blocks[block_id2];
         }
 
-        remaining_blocks -= num_blocks_to_allocate;
+        remaining_blocks = 0;
+    }
 
-        if (num_inodes == 2 && remaining_blocks > 0) //需要分配间接块，不需要分配索引块
+    if (remaining_blocks > 32) //需要分配多个一级间接块，需要一个二级间接块来索引（模拟情况：大小不超过256k的文件）
+    {
+        // 分配剩余的数据块，这些数据块需要通过间接块中的指针来指向
+        int num_indirect_blocks = ceil(remaining_blocks / 32.0); // 计算需要的间接块数
+
+        // 分配一个二级间接块
+        int indirect2_block_id = findFreeDataBlock();
+        if (indirect2_block_id == -1) {
+            cout << "没有可用的空闲数据块。" << endl;
+            return -1;
+        }
+        // 标记数据块为已占用
+        d_bitmap[indirect2_block_id] = true;
+
+        // 更新数据块的属性
+        data_blocks[indirect2_block_id].occupied = true;
+        data_blocks[indirect2_block_id].blockType = INDIRECT_BLOCK; // 二级间接块
+        data_blocks[indirect2_block_id].block_id = inode_id;
+        data_blocks[indirect2_block_id].block_size = blockSize;
+
+        // 将分配的二级间接块的指针添加到对应的inode的磁盘指针中
+        inodes_blocks[inode_id].disk_pointer.push_back(&data_blocks[indirect2_block_id]);
+
+        // 分配一级间接块并将指针添加到二级间接块中
+        for (int i = 0; i < num_indirect_blocks; i++)
         {
-            int inode_id2 = inode_ids[1];//用之前找出的空闲inode块的数组中的第二个 
-            // 标记inode为已占用
-            i_bitmap[inode_id2] = true;
-            // 更新inode的属性
-            inodes_blocks[inode_id2].i_number = i_number;
-            inodes_blocks[inode_id2].recycled = false;
-            inodes_blocks[inode_id2].file_type = 0;//文件类型
-            inodes_blocks[inode_id2].file_name = file_name;
-            inodes_blocks[inode_id2].file_size = 0;
             // 分配一个间接块
-            int index_block_id2 = findFreeDataBlock();
-            if (index_block_id2 == -1) {
+            int indirect_block_id = findFreeDataBlock();
+            if (indirect_block_id == -1) {
                 cout << "没有可用的空闲数据块。" << endl;
                 return -1;
             }
             // 标记数据块为已占用
-            d_bitmap[index_block_id2] = true;
-
-            int indirect_block_id2=index_block_id2;
-            //修改间接块的信息
-            data_blocks[indirect_block_id2].occupied = true;
-            data_blocks[indirect_block_id2].blockType = INDIRECT_BLOCK; // 间接块
-            data_blocks[indirect_block_id2].block_id = i_number;
-            data_blocks[indirect_block_id2].block_size = blockSize;
-
-            // 将分配的间接块的指针添加到inode块信息中
-            inodes_blocks[1].disk_pointer.push_back(&data_blocks[indirect_block_id2]);
-            //分配数据块
-
-            //1.计算需要几个数据块存储数据
-            int num_blocks_to_allocate2 = min(remaining_blocks, 32); // 最多分配32个数据块
-
-            // 分配 num_blocks_to_allocate 个间接块
-            vector<int> block_ids = findFreeDataBlocks(num_blocks_to_allocate2);
-            if (block_ids.size() < num_blocks_to_allocate2)
-            {
-                cout << "没有足够的可用空闲数据块。" << endl;
-                return -1;
-            }
-
-            for (int i = 0; i < num_blocks_to_allocate2; i++)
-            {
-                int block_id2 = block_ids[i];
-
-                // 标记数据块为已占用
-                d_bitmap[block_id2] = true;
-
-                // 更新数据块的属性
-                data_blocks[block_id2].occupied = true;
-                data_blocks[block_id2].blockType = FILE_BLOCK;
-                data_blocks[block_id2].block_id = i_number;
-                data_blocks[block_id2].block_size = blockSize;
-
-                // 将文件内容从输入缓冲区复制到数据块中
-                if (input_buffer != nullptr) {
-                    // 假设 content 是数据块的内容缓冲区
-                    strcpy(data_blocks[block_id2].content, input_buffer->c_str());
-                    inodes_blocks[inode_id2].file_size = input_buffer->size();
-
-                }
-
-                // 将分配的数据块的指针添加到间接块中
-                data_blocks[indirect_block_id2].indirect_block[i] = &data_blocks[block_id2];
-            }
-
-            remaining_blocks -= num_blocks_to_allocate2;
-
-
-        }
-
-        if (num_inodes > 2 && remaining_blocks > 0) //需要分配索引块
-        {
-            // 分配剩余的数据块，这些数据块需要通过间接块中的指针来指向
-            remaining_blocks -= 12;
-            int num_indirect_blocks = ceil(remaining_blocks / 32.0); // 计算需要的间接块数
-
-            // 分配一个索引块
-            int index_block_id = findFreeDataBlock();
-            if (index_block_id == -1) {
-                cout << "没有可用的空闲数据块。" << endl;
-                return -1;
-            }
-            // 标记数据块为已占用
-            d_bitmap[index_block_id] = true;
+            d_bitmap[indirect_block_id] = true;
 
             // 更新数据块的属性
-            data_blocks[index_block_id].occupied = true;
-            data_blocks[index_block_id].blockType = INDEX_BLOCK; // 索引块
-            data_blocks[index_block_id].block_id = i_number;
-            data_blocks[index_block_id].block_size = blockSize;
+            data_blocks[indirect_block_id].occupied = true;
+            data_blocks[indirect_block_id].blockType = INDIRECT_BLOCK; // 间接块
+            data_blocks[indirect_block_id].block_id = inode_id;
+            data_blocks[indirect_block_id].block_size = blockSize;
 
-            // 创建一个新的inode来存放索引块的信息
-            int index_inode_id = findFreeInode();
-            if (index_inode_id == -1) {
-                cout << "没有可用的空闲inode。" << endl;
-                return -1;
-            }
-            // 标记inode为已占用
-            i_bitmap[index_inode_id] = true;
+            // 将分配的一级间接块的指针添加到二级间接块中
+            data_blocks[indirect2_block_id].indirect_block[i] = (&data_blocks[indirect_block_id]);
+        }
 
-            // 更新inode的属性
-            inodes_blocks[index_inode_id].i_number = i_number;
-            inodes_blocks[index_inode_id].recycled = false;
-            inodes_blocks[index_inode_id].file_type = 0;//文件类型
-            inodes_blocks[index_inode_id].file_name = file_name;
-            inodes_blocks[index_inode_id].file_size = num_indirect_blocks;
-
-            // 将分配的索引块的指针添加到对应的inode的磁盘指针中
-            inodes_blocks[inode_id].disk_pointer_pointer.push_back(&data_blocks[index_block_id]);
-
-            // 分配间接块并将指针添加到索引块中
-            for (int i = 0; i < num_indirect_blocks; i++)
+        for (int i = 1; i <= num_indirect_blocks; i++) // i=0 存了指向二级间接块的指针
+        {
+            for (int j = 0; j < min(remaining_blocks, 32); j++)
             {
-                // 分配一个间接块
-                int indirect_block_id = findFreeDataBlock();
-                if (indirect_block_id == -1) {
+                // 分配一个数据块
+                int data_block_id = findFreeDataBlock();
+                if (data_block_id == -1) {
                     cout << "没有可用的空闲数据块。" << endl;
                     return -1;
                 }
                 // 标记数据块为已占用
-                d_bitmap[indirect_block_id] = true;
+                d_bitmap[data_block_id] = true;
 
                 // 更新数据块的属性
-                data_blocks[indirect_block_id].occupied = true;
-                data_blocks[indirect_block_id].blockType = INDIRECT_BLOCK; // 间接块
-                data_blocks[indirect_block_id].block_id = i_number;
-                data_blocks[indirect_block_id].block_size = blockSize;
+                data_blocks[data_block_id].occupied = true;
+                data_blocks[data_block_id].blockType = FILE_BLOCK;
+                data_blocks[data_block_id].block_id = inode_id;
+                data_blocks[data_block_id].block_size = blockSize;
 
-                // 将分配的间接块的指针添加到索引块中
-                inodes_blocks[index_inode_id].disk_pointer.push_back(&data_blocks[indirect_block_id]);
-            }
-
-            for (int i = 0; i < num_indirect_blocks; i++)
-            {
-                for (int j = 0; j < min(remaining_blocks, 32); j++)
-                {
-                    // 分配一个数据块
-                    int data_block_id = findFreeDataBlock();
-                    if (data_block_id == -1) {
-                        cout << "没有可用的空闲数据块。" << endl;
-                        return -1;
-                    }
-                    // 标记数据块为已占用
-                    d_bitmap[data_block_id] = true;
-
-                    // 更新数据块的属性
-                    data_blocks[data_block_id].occupied = true;
-                    data_blocks[data_block_id].blockType = FILE_BLOCK;
-                    data_blocks[data_block_id].block_id = i_number;
-                    data_blocks[data_block_id].block_size = blockSize;
-
-                    // 将文件内容从输入缓冲区复制到数据块中
-                    if (input_buffer != nullptr) {
-                        strcpy(data_blocks[data_block_id].content, input_buffer->c_str());
-                        inodes_blocks[inode_id].file_size = input_buffer->size();
-                    }
-
-                    // 将分配的数据块的指针添加到间接块中
-                    int indirect_block_id = inodes_blocks[index_inode_id].disk_pointer[i]->block_id;
-                    inodes_blocks[index_inode_id].disk_pointer[i]->indirect_block[j] = &data_blocks[data_block_id];
+                // 将文件内容从输入缓冲区复制到数据块中
+                if (input_buffer != nullptr) {
+                    strcpy(data_blocks[data_block_id].content, input_buffer->c_str());
+                    inodes_blocks[inode_id].file_size = input_buffer->size();
                 }
 
-                remaining_blocks -= 32;
+                // 将指向分配的数据块的指针添加到一级间接块中
+                inodes_blocks[inode_id].disk_pointer[i]->indirect_block[j] = &data_blocks[data_block_id];
             }
+
+            remaining_blocks -= 32;
         }
     }
 }
