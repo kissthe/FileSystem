@@ -27,10 +27,11 @@ struct Disk_Block{
     BlockType blockType;//磁盘存储的是哪种类型的数据
     int block_id;//这一块儿属于哪一个文件
     int block_size;
+    int index_number=0;//意思就是存储的index的数量
     union {
         char content[256];//存储文件的内容
         Disk_Block* indirect_block[32];  //存储间接块儿
-        Dir_Index index[10];   //存放目录内容
+        Dir_Index index[10];   //存放目录内容,这里不容易知道存放多少个
     };
 };//磁盘块儿
 
@@ -66,7 +67,8 @@ public:
      * 新建，修改文件的时候需要对应修改inode属性
      */
     string input_buffer;//输入缓冲区
-    Inode dir_input_buffer[20];//目录项输入缓冲区,增加目录时注意也要在当前目录下增加条目
+    //Inode dir_input_buffer[20];//目录项输入缓冲区,增加目录时注意也要在当前目录下增加条目
+    vector<Dir_Index> dir_input_buffer;
 
     FileManagement(Inode*root);//构造函数
     bool remove(string file_name,int i_number);
@@ -79,12 +81,12 @@ public:
 
     bool recycle_file(int i_number);//放入回收站
 
-    void add_index();//增加目录项
+    void add_index(string dir_name);//增加目录项
     void delete_index();//删除目录项
     void sort_index();//将目录项排序
 
     void print_current_dir();//打印出当前的工作目录
-    bool rename_file(int i_number,string new_name);
+    bool rename_file(string old_name,string new_name);
 
     void sort_index(int choice);
 };
@@ -103,13 +105,13 @@ private:
 
 public:
     string output_buffer;//读取的文件内容放在这里就行,输出缓冲区
-    Inode dir_output_buffer[20];//读取的目录项放在这里
+    vector<Dir_Index> dir_output_buffer;//读取的目录项放在这里
 
     Disk() ;
     ~Disk();
 
     int allocateBlock_File(string file_name,string* input_buffer= nullptr);//返回inode号，分配文件
-    int allocateBlock_Dir( string file_name, Dir_Index dir_input_buffer[20]);//返回inode号，分配目录
+    int allocateBlock_Dir( string file_name, vector<Dir_Index>dir_input_buffer);//返回inode号，分配目录
     bool deleteBlock(int i_number);
     string modify_time();//修改文件时间，只有保存到磁盘的时候才需要修改
     void displayDiskStatus();
@@ -127,6 +129,8 @@ public:
     int findFreeInode();
 
     vector<int> findFreeDataBlocks(int num_blocks);
+
+    void add_index_in_dir(int pi_number,int ci_number);
 };//磁盘管理模块儿
 
 
