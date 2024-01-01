@@ -1,7 +1,7 @@
 #include "FS.h"
 
 //传入目录信息，缓存区信息 
-int Disk::allocateBlock_Dir( string file_name, vector<Dir_Index>dir_input_buffer) {
+int Disk::allocateBlock_Dir( string file_name, vector<Inode>dir_input_buffer) {
     int block_id = -1;
     // 找到一个空闲的inode
     int inode_id = findFreeInode();
@@ -44,7 +44,7 @@ int Disk::allocateBlock_Dir( string file_name, vector<Dir_Index>dir_input_buffer
             data_blocks[x].block_id = inode_id;
             data_blocks[x].block_size = blockSize; // 256 待定
             for (int j = 0; j < 10 && buffer_index < dir_input_buffer.size(); j++) {
-                data_blocks[x].index[j] = dir_input_buffer[buffer_index];
+                data_blocks[x].index[j] = dir_input_buffer[buffer_index].i_number;
                 buffer_index++;
             }
         }
