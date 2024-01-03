@@ -1,24 +1,23 @@
 #include "FS.h"
 
-
 // 删除一个文件所有被占用的磁盘块
 bool Disk::deleteBlock(int i_number) {
 
 	// 查找该i_number所对应的inode
 	// 遍历inode位视图寻找非空闲的inode
-	int inode_id = -1;//记录找到的inode的下标
-	for (int i = 0; i < I_BMAP_NUM; i++) {
-		if (i_bitmap[i]) {
-			// 比较该inode对应的i_number是否与传入的i_number匹配
-			if (inodes_blocks[i].i_number == i_number) {
-				inode_id = i;
-				break;
-			}
-		}
-	}
+	int inode_id = i_number;//记录找到的inode的下标
+//	for (int i = 0; i < I_BMAP_NUM; i++) {
+//		if (i_bitmap[i]) {
+//			// 比较该inode对应的i_number是否与传入的i_number匹配
+//			if (inodes_blocks[i].i_number == i_number) {
+//				inode_id = i;
+//				break;
+//			}
+//		}
+//	}
 
 	// 未在inode表中找到对应的inode
-	if (inode_id == -1) {
+	if (!i_bitmap[i_number]) {
 		cout << "i_number无效" << endl;
 		return false;
 	}
@@ -47,20 +46,21 @@ bool Disk::deleteBlock(int i_number) {
 				memset(block->content, 0, sizeof(block->content));
 				// 恢复数据块其他信息为默认状态
 				block->occupied = false;
+                block->index_number=0;
 				block->block_id = -1;
 				block->block_size = 0;
 				memset(block->content, 0, 256);
 				for (int j = 0; j < 32; j++)
 					block->indirect_block[j] = nullptr;
-				for (int j = 0; j < 10; j++)
-					block->index[j] = { 0 };
+				for (int j = 0; j < 64; j++)
+					block->index[j] = 0;
 				// 更新inode的磁盘指针
 				block = nullptr;
 			}
 		}
 
 		// 删除间接块
-		for (int i = 0; i < 32; i++) {
+		for (int i = 0; i < inodes_blocks[inode_id].disk_pointer.size(); i++) {
 			Disk_Block* block = inodes_blocks[inode_id].disk_pointer[i];
 			if (block == nullptr) {
 				break;
@@ -82,11 +82,15 @@ bool Disk::deleteBlock(int i_number) {
 				block->occupied = false;
 				block->block_id = -1;
 				block->block_size = 0;
-				memset(block->content, 0, 256);
-				for (int j = 0; j < 32; j++)
-					block->indirect_block[j] = nullptr;
-				for (int j = 0; j < 10; j++)
-					block->index[j] = { 0 };
+                block->index_number=0;
+				//memset(block->content, 0, 256);
+				for (int j = 0; j < 32; j++){
+                    if(block->indirect_block[j]== nullptr)break;
+                    memset(block->indirect_block[j]->content,0,256);
+                    block->indirect_block[j] = nullptr;
+                }
+				for (int j = 0; j < 64; j++)
+					block->index[j] = 0;
 				// 更新间接块中的指针
 				block = nullptr;
 			}
@@ -122,8 +126,8 @@ bool Disk::deleteBlock(int i_number) {
 				memset(block->content, 0, 256);
 				for (int j = 0; j < 32; j++)
 					block->indirect_block[j] = nullptr;
-				for (int j = 0; j < 10; j++)
-					block->index[j] = { 0 };
+				for (int j = 0; j < 64; j++)
+					block->index[j] = 0;
 				// 更新inode的磁盘指针
 				block = nullptr;
 			}
@@ -156,10 +160,14 @@ bool Disk::deleteBlock(int i_number) {
 void Disk::displayDiskStatus() {
 	// 计算inode表所占内存
 	int inode_memory_size = 0;
+    int free_inode_number=0;
+    int free_data_number=0;
+
 	for (int i = 0; i < I_BMAP_NUM; i++) {
 		// 找到一个非空闲的inode
-		if (i_bitmap[i]) {
-			inode_memory_size = sizeof(inodes_blocks[i].i_number) +
+		if (!i_bitmap[i]) {
+            free_inode_number++;
+			inode_memory_size += sizeof(inodes_blocks[i].i_number) +
 				sizeof(inodes_blocks[i].recycled) +
 				sizeof(inodes_blocks[i].file_type) +
 				sizeof(inodes_blocks[i].file_size) +
@@ -173,8 +181,9 @@ void Disk::displayDiskStatus() {
 	int data_memory_size = 0;
 	for (int i = 0; i < D_BMAP_NUM; i++) {
 		// 找到一个非空闲的inode
-		if (d_bitmap[i]) {
-			data_memory_size = sizeof(data_blocks[i].occupied) +
+		if (!d_bitmap[i]) {
+            free_data_number++;
+			data_memory_size += sizeof(data_blocks[i].occupied) +
 				sizeof(data_blocks[i].blockType) +
 				sizeof(data_blocks[i].block_id) +
 				sizeof(data_blocks[i].block_size);
@@ -183,10 +192,12 @@ void Disk::displayDiskStatus() {
 			else if (data_blocks[i].indirect_block)
 				data_memory_size += sizeof(Disk_Block*) * 64;
 			else if (data_blocks[i].index)
-				data_memory_size += sizeof(Dir_Index) * 10;
+				data_memory_size += sizeof(int) * 10;
 		}
 	}
 
 	cout << "inode内存大小" << inode_memory_size << "字节" << endl;
 	cout << "数据块内存大小" << data_memory_size << "字节" << endl;
+    cout << "空闲inode数量:" << free_inode_number  << endl;
+    cout << "空闲内存块儿数量:" << free_data_number  << endl;
 }
