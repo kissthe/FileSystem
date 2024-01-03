@@ -1,8 +1,38 @@
 #include "FS.h"
 
-
 void FileManagement::print_current_dir() {
-    cout<<current_dir;
+    cout<<"current_dir:"<<current_dir<<endl;
+}
+void FileManagement::update_buffer() {
+    disk->read_dir(ope_inode);
+    //cout<<"????????????????????"<<endl;
+    dir_input_buffer=disk->dir_output_buffer;
+    parent_inode=disk->parent_inode_number;
+    disk->dir_output_buffer.clear();//读取完毕后清空磁盘缓冲区
+
+
+}
+
+void FileManagement::print_dir_details() {
+    cout<<"ope_node:"<<ope_inode<<endl;
+    cout<<"current_dir_child_number:"<<disk->get_CurDirChild_number(ope_inode)<<endl;
+    cout<<"FileName"<<"\t"<<"ModifiedTime"<<"\t"<<"Type"<<"\t"<<"Size"<<endl;
+    update_buffer();
+    //cout<<"update success!"<<endl;
+    if(dir_input_buffer.size()==0){
+        cout<<"current file is empty"<<endl;
+        return;
+    }
+    for(auto i:dir_input_buffer){
+        //if(i.i_number!=dir_input_buffer.front().i_number){
+            if(i.file_type==FILE_TYPE){
+                cout<<i.file_name<<"\t"<<i.modified_time<<"\t"<<"File"<<"\t"<<i.file_size<<endl;
+            } else{
+                cout<<i.file_name<<"\t"<<i.modified_time<<"\t"<<"Dir"<<"\t"<<endl;
+            }
+        //}
+    }
+
 }
 
 bool FileManagement::rename_file(string old_name, string new_name) {
@@ -23,18 +53,23 @@ bool FileManagement::rename_file(string old_name, string new_name) {
     return false;
 }
 
-bool FileManagement::create(bool file_type,string file_name) {
+bool FileManagement::create(FileType file_type,string file_name) {
     /*
      * 新建文件夹、文件其实都是相当于让磁盘分配空间，因此直接调用磁盘的函数即可
      * true代表普通文件,false代表目录文件
      */
     int ci_number;
-    if(file_type){
-       ci_number= disk->allocateBlock_File(file_name);
-       disk->add_index_in_dir(ope_inode,ci_number);
-    } else{
-       ci_number= disk->allocateBlock_Dir(file_name,dir_input_buffer);
+    if(file_type==FILE_TYPE){
+        cout <<"input file content:";
+        cin>>input_buffer;
+        ci_number= disk->allocateBlock_File(file_name,&input_buffer);
         disk->add_index_in_dir(ope_inode,ci_number);
+    } else{
+       ci_number= disk->new_allocate_dir(file_name);
+       cout<<"allocate finish:"<<ci_number<<endl;
+       disk->add_index_in_dir(ope_inode,ci_number);
+       disk->add_index_in_dir(ci_number,ope_inode);
+
     }
 }
 
@@ -42,15 +77,18 @@ bool FileManagement::remove(string file_name) {
     /*
      * 回收磁盘空间，删除对应inode节点
      */
+    update_buffer();
     for(auto i:dir_input_buffer){
         if(i.file_name==file_name){
             disk->delete_index_in_dir(ope_inode,i.i_number);
             return disk->deleteBlock(i.i_number);
         }
     }
+    cout<<"could not find the file/dir"<<endl;
     return false;
 }
 bool FileManagement::recycle_file(string file_name)  {
+
     for(auto i:dir_input_buffer){
         if(i.file_name==file_name){
             return disk->modify_file_recycled(i.i_number);
@@ -59,18 +97,6 @@ bool FileManagement::recycle_file(string file_name)  {
     return false;
 }
 
-string FileManagement::get_dir_content(int i_number) {
-    disk->read_file(i_number);
-    for(auto i:dir_input_buffer){
-        dir_content.append(i.file_name);
-        dir_content.push_back('\t');
-        dir_content.append(i.modified_time);
-        dir_content.push_back('\t');
-        //dir_content.append();此处需要增加文件类型
-        dir_content.push_back('\n');
-    }
-    return dir_content;
-}
 
 string FileManagement::get_file_content() {
     for (auto i:input_buffer) {
@@ -79,12 +105,13 @@ string FileManagement::get_file_content() {
     return file_content;
 }
 
-string FileManagement::cd_dir(string file_name) {
+void FileManagement::cd_dir(string file_name) {
     //bool exist= false;
     /*
      * 根据文件夹名称进入相应的目录
      * 返回的就是进入目录的相关信息，用string存储，可以在GUI端显示
      */
+    update_buffer();
     for(auto i:dir_input_buffer){
         if(i.file_name==file_name){
             /*
@@ -93,12 +120,21 @@ string FileManagement::cd_dir(string file_name) {
              */
             parent_inode=ope_inode;
             ope_inode=i.i_number;
+            current_dir.push_back('/');
+            current_dir+=disk->get_file_name(ope_inode);
             //exist= true;
             break;
         }
     }
     disk->read_file(ope_inode);
-    return get_dir_content(ope_inode);//返回子目录的内容
+    return;
+}
+
+void FileManagement::go_back() {
+    update_buffer();
+    string tmp=disk->get_file_name(ope_inode);
+    ope_inode=parent_inode;
+    for(int i=0;i<=tmp.size();i++)current_dir.pop_back();
 }
 
 // 按照文件名进行比较
@@ -114,6 +150,10 @@ bool compareBySize(const Inode& a, const Inode& b) {
 // 按照修改日期进行比较
 bool compareByModifiedTime(const Inode& a, const Inode& b) {
     return a.modified_time.compare(b.modified_time) < 0;
+}
+
+void FileManagement::show_disk_status() {
+    disk->displayDiskStatus();
 }
 
 void FileManagement::sort_index(int choice) {
