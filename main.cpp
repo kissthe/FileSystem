@@ -1,11 +1,64 @@
 #include "FS.h"
 
 int main() {
-    Disk disk1();
-    FileManagement my_file();
-    /*
-     * 1.å»ºè®®æ„é€ å‡½æ•°çš„æ—¶å€™å°±å·²ç»å­˜æ”¾äº†ä¸€äº›ç›®å½•ï¼Œå…ˆæŠŠç”¨æˆ·æ ¹ç›®å½•æ‰“å°å‡ºæ¥
-     * 2.åˆ—ä¸¾é€‰é¡¹ï¼Œå¯ä»¥æ“æ§ä¸åŒçš„å‡½æ•°
-     */
+    Disk disk1(DATA_BLOCK_NUM, BLOCK_SIZE);
+    FileManagement my_file(&disk1);
+    bool flag = true;
+    int choice;
+    string file_name;
+
+    while (flag) {
+        my_file.print_current_dir();
+        cout << "1. ÁĞ³öµ±Ç°Ä¿Â¼\n";
+        cout << "2. ½øÈëÄ³Ä¿Â¼\n";
+        cout << "3. ĞÂ½¨Ä¿Â¼\n";
+        cout << "4. ĞÂ½¨ÎÄ¼ş\n";
+        cout << "5. É¾³ıÎÄ¼ş/Ä¿Â¼\n";
+        cout << "6. ²é¿´´ÅÅÌ×´Ì¬\n";
+        cout << "7. ·µ»ØÉÏ¼¶Ä¿Â¼\n";
+        cout << "8. ÍË³ö\n";
+
+        cout << "ÇëÊäÈëÄãµÄÑ¡Ïî: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                my_file.print_dir_details();
+                break;
+            case 2:
+                cout << "ÇëÊäÈëÒª½øÈëµÄÄ¿Â¼Ãû: ";
+                cin >> my_file.input_buffer;
+                my_file.cd_dir(my_file.input_buffer);
+                break;
+            case 3:
+                cout << "ÇëÊäÈëÒªĞÂ½¨µÄÄ¿Â¼Ãû: ";
+                cin >> file_name;
+                my_file.create(DIRECTORY_TYPE, file_name);
+                break;
+            case 4:
+                cout << "ÇëÊäÈëÒªĞÂ½¨µÄÎÄ¼şÃû: ";
+                cin >> file_name;
+                my_file.create(FILE_TYPE, file_name);
+                break;
+            case 5:
+                cout << "ÇëÊäÈëÒªÉ¾³ıµÄÎÄ¼ş/Ä¿Â¼Ãû: ";
+                cin >> file_name;
+                my_file.remove(file_name);
+                break;
+            case 6:
+                my_file.show_disk_status();
+                break;
+            case 7:
+                my_file.go_back();
+                break;
+            case 8:
+                flag = false;
+                break;
+            default:
+                cout << "ÎŞĞ§µÄÑ¡Ïî£¬ÇëÖØĞÂÊäÈë\n";
+                break;
+        }
+    }
+
     return 0;
 }
