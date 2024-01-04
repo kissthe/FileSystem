@@ -1,21 +1,21 @@
 #include "FS.h"
 /*
- * ä¿®æ”¹æ„è§ï¼š
- * 1.ç›´æ¥å—å„¿åˆ†é…æ²¡æœ‰é—®é¢˜ï¼Œä½†æ˜¯é—´æ¥å—å„¿å¯èƒ½ä¼šæœ‰ç‚¹é—®é¢˜ï¼šå°±æ˜¯è¯´é—´æ¥å—å„¿å…¶å®å°±æ˜¯ä¸€ä¸ªè£…æ»¡æŒ‡é’ˆçš„å—å„¿ï¼ŒåŒä¸€ä¸ªæ–‡ä»¶çš„inodeæ˜¯ç›¸åŒçš„ï¼Œå› æ­¤ä¸ç”¨å†åˆ†é…inode
- * 2.å…¶å®æ®æˆ‘ç†è§£ä½ é‚£ä¸ªç´¢å¼•å—å°±æ˜¯æˆ‘ä»¬éœ€è¦çš„é—´æ¥å—å„¿çš„æ•ˆæœã€‚ã€‚æ€ªæˆ‘å½“æ—¶æŠŠé‚£ä¸ªæšä¸¾ç±»å‹å‘½åä¸ºç´¢å¼•å—ã€‚ã€‚ã€‚æˆ‘å…¶å®æƒ³è¡¨è¾¾çš„æ˜¯â€œç´¢å¼•å—å„¿â€æ˜¯æŒ‡çš„é‚£ä¸ªblocké‡Œé¢å­˜æ”¾çš„æ˜¯ç›®å½•
- * ä¹Ÿå°±æ˜¯è¯´ä½ åˆ†é…ç´¢å¼•å—å„¿çš„é‚£ä¸ªåŠŸèƒ½åŸºæœ¬ä¸Šå°±æ˜¯æˆ‘ä»¬æƒ³è¦çš„åˆ†é…é—´æ¥å—å„¿çš„æ•ˆæœï¼Œå› æ­¤æˆ‘æŠŠé‚£ä¸ªpointer_to_pointeré‚£ä¸ªæ•°ç»„æ³¨é‡Šæ‰äº†
- * 3.i_numberå·å’Œinodeæ•°ç»„å¯¹åº”çš„ä¸‹æ ‡ä¸€æ ·ï¼Œæˆ‘å½“æ—¶ä¹Ÿæ²¡è¯´æ¸…æ¥šï¼Œæˆ‘çš„é”…
- * 4.å°±æ˜¯å¦‚æœå“ªé‡Œè¿˜æœ‰é—®é¢˜çš„è¯å¯ä»¥é—®æˆ‘
+ * ĞŞ¸ÄÒâ¼û£º
+ * 1.Ö±½Ó¿é¶ù·ÖÅäÃ»ÓĞÎÊÌâ£¬µ«ÊÇ¼ä½Ó¿é¶ù¿ÉÄÜ»áÓĞµãÎÊÌâ£º¾ÍÊÇËµ¼ä½Ó¿é¶ùÆäÊµ¾ÍÊÇÒ»¸ö×°ÂúÖ¸ÕëµÄ¿é¶ù£¬Í¬Ò»¸öÎÄ¼şµÄinodeÊÇÏàÍ¬µÄ£¬Òò´Ë²»ÓÃÔÙ·ÖÅäinode
+ * 2.ÆäÊµ¾İÎÒÀí½âÄãÄÇ¸öË÷Òı¿é¾ÍÊÇÎÒÃÇĞèÒªµÄ¼ä½Ó¿é¶ùµÄĞ§¹û¡£¡£¹ÖÎÒµ±Ê±°ÑÄÇ¸öÃ¶¾ÙÀàĞÍÃüÃûÎªË÷Òı¿é¡£¡£¡£ÎÒÆäÊµÏë±í´ïµÄÊÇ¡°Ë÷Òı¿é¶ù¡±ÊÇÖ¸µÄÄÇ¸öblockÀïÃæ´æ·ÅµÄÊÇÄ¿Â¼
+ * Ò²¾ÍÊÇËµÄã·ÖÅäË÷Òı¿é¶ùµÄÄÇ¸ö¹¦ÄÜ»ù±¾ÉÏ¾ÍÊÇÎÒÃÇÏëÒªµÄ·ÖÅä¼ä½Ó¿é¶ùµÄĞ§¹û£¬Òò´ËÎÒ°ÑÄÇ¸öpointer_to_pointerÄÇ¸öÊı×é×¢ÊÍµôÁË
+ * 3.i_numberºÅºÍinodeÊı×é¶ÔÓ¦µÄÏÂ±êÒ»Ñù£¬ÎÒµ±Ê±Ò²Ã»ËµÇå³ş£¬ÎÒµÄ¹ø
+ * 4.¾ÍÊÇÈç¹ûÄÄÀï»¹ÓĞÎÊÌâµÄ»°¿ÉÒÔÎÊÎÒ
  *
  */
 using namespace std;
 
-// å‡½æ•°å£°æ˜åŒº
+// º¯ÊıÉùÃ÷Çø
 vector<int> findFreeInodes(int num_inodes);
 int findFreeDataBlock();
 vector<int> findFreeDataBlocks(int num_blocks);
 
-// æ–‡ä»¶çš„åˆ†é…å‡½æ•°
+// ÎÄ¼şµÄ·ÖÅäº¯Êı
 int Disk::allocateBlock_File(string file_name, string* input_buffer)
 {
     if( input_buffer == nullptr ){
@@ -23,117 +23,126 @@ int Disk::allocateBlock_File(string file_name, string* input_buffer)
         exit(0);
     }
     int block_id = -1;
-    int length = input_buffer->length(); // ç¼“å†²åŒºæ•°æ®é•¿åº¦ 
-    //int block_size = 256; // å•ä¸ªæ•°æ®å—256å­—èŠ‚
+    int length = input_buffer->length(); // »º³åÇøÊı¾İ³¤¶È 
+    //int block_size = 256; // µ¥¸öÊı¾İ¿é256×Ö½Ú
     int block_size = blockSize;
 
-    double num_blocks = (length + block_size - 1) / block_size; // è®¡ç®—éœ€è¦å¤šå°‘ä¸ªæ•°æ®å—
-    int num_blocks_rounded = ceil(num_blocks); // å‘ä¸Šå–æ•´
+    double num_blocks = (length + block_size - 1) / block_size; // ¼ÆËãĞèÒª¶àÉÙ¸öÊı¾İ¿é
+    int num_blocks_rounded = ceil(num_blocks); // ÏòÉÏÈ¡Õû
 
-    // é»˜è®¤åˆ†é…ä¸€ä¸ªinodeï¼ˆçº¦å®šä¸€å…±15ä¸ªæŒ‡é’ˆï¼Œå‰12ä¸ªç›´æ¥ç´¢å¼•ï¼Œç¬¬13ä¸ªä¸€çº§é—´æ¥ç´¢å¼•ï¼Œç¬¬14ä¸ªäºŒçº§é—´æ¥ç´¢å¼•ï¼Œç¬¬15ä¸ªä¸‰çº§é—´æ¥ç´¢å¼•ï¼‰
+    // Ä¬ÈÏ·ÖÅäÒ»¸öinode£¨Ô¼¶¨Ò»¹²15¸öÖ¸Õë£¬Ç°12¸öÖ±½ÓË÷Òı£¬µÚ13¸öÒ»¼¶¼ä½ÓË÷Òı£¬µÚ14¸ö¶ş¼¶¼ä½ÓË÷Òı£¬µÚ15¸öÈı¼¶¼ä½ÓË÷Òı£©
     int num_inodes = 1;
 
-    // åˆ†é…æ‰€éœ€çš„inode
+    // ·ÖÅäËùĞèµÄinode
     int inode_id = findFreeInode();
     if (inode_id == -1)
     {
-        cout << "æ²¡æœ‰è¶³å¤Ÿçš„å¯ç”¨ç©ºé—²inodeã€‚" << endl;
+        cout << "Ã»ÓĞ×ã¹»µÄ¿ÉÓÃ¿ÕÏĞinode¡£" << endl;
         return -1;
     }
 
-    // æ ‡è®°inodeä¸ºå·²å ç”¨
-    i_bitmap[inode_id] = true;
+    // ±ê¼ÇinodeÎªÒÑÕ¼ÓÃ
+    i_bitmap[inode_id] = 1;
 
-    // æ›´æ–°inodeçš„å±æ€§
+    // ¸üĞÂinodeµÄÊôĞÔ
     inodes_blocks[inode_id].i_number = inode_id;
     inodes_blocks[inode_id].recycled = false;
-    inodes_blocks[inode_id].file_type = 0;//æ–‡ä»¶ç±»å‹
-    inodes_blocks[inode_id].file_size = 0;
+    inodes_blocks[inode_id].file_type = FILE_TYPE;//ÎÄ¼şÀàĞÍ
     inodes_blocks[inode_id].file_name = file_name;
+    inodes_blocks[inode_id].file_size=length;//Õâ¸öÎÄ¼şÄÚÈİÓĞ¶à´óÔÚÕâ¸öÊ±ºò¾ÍÒÑ¾­È·¶¨ÁË
+    inodes_blocks[inode_id].modified_time=modify_time();
     //inodes_blocks[inode_id].file_block = 0;
 
 //}
 
-//---------------------åˆ†é…æ–‡ä»¶å†…å®¹------------------------------
+//---------------------·ÖÅäÎÄ¼şÄÚÈİ------------------------------
 
-    // å¦‚æœç¼“å†²åŒºæœ‰å†…å®¹ï¼Œè®¡ç®—æ–‡ä»¶å¤§å°å‡†å¤‡åˆ†é…
-    int length = input_buffer->length();
+    // Èç¹û»º³åÇøÓĞÄÚÈİ£¬¼ÆËãÎÄ¼ş´óĞ¡×¼±¸·ÖÅä
+    int flag=0;//¼ÇÂ¼µ±Ç°»º³åÇøµÄ×Ö·ûÆğÊ¼Î»ÖÃ
 
-    if (length) {
-        inodes_blocks[inode_id].file_size = length;
-    }
 
-    // åˆ†é…æ•°æ®å—
-    int remaining_blocks = num_blocks_rounded;//æ•°æ®å—çš„ä¸ªæ•°
-    int block_offset = 0;
-    int count = 0;
 
-    int num_blocks_to_allocate = min(remaining_blocks, 12); // æœ€å¤šåˆ†é…12ä¸ªç›´æ¥å—
 
-    // åˆ†é… num_blocks_to_allocate ä¸ªç›´æ¥å—
+    // ·ÖÅäÊı¾İ¿é
+    int remaining_blocks = num_blocks_rounded;//Êı¾İ¿éµÄ¸öÊı
+
+    int num_blocks_to_allocate = min(remaining_blocks, 12); // ×î¶à·ÖÅä12¸öÖ±½Ó¿é
+
+    // ·ÖÅä num_blocks_to_allocate ¸öÖ±½Ó¿é
     vector<int> block_ids = findFreeDataBlocks(num_blocks_to_allocate);
 
     if (block_ids.size() < num_blocks_to_allocate)
     {
-        cout << "æ²¡æœ‰è¶³å¤Ÿçš„å¯ç”¨ç©ºé—²æ•°æ®å—ã€‚" << endl;
-        return -1;//é€€å‡ºè¯¥å‡½æ•°
+        cout << "Ã»ÓĞ×ã¹»µÄ¿ÉÓÃ¿ÕÏĞÊı¾İ¿é¡£" << endl;
+        return -1;//ÍË³ö¸Ãº¯Êı
     }
 
     for (int i = 0; i < num_blocks_to_allocate; i++)
     {
         int block_id = block_ids[i];
 
-        // æ ‡è®°æ•°æ®å—ä¸ºå·²å ç”¨
-        d_bitmap[block_id] = true;
+        // ±ê¼ÇÊı¾İ¿éÎªÒÑÕ¼ÓÃ
+        d_bitmap[block_id] = 1;
 
-        // æ›´æ–°æ•°æ®å—çš„å±æ€§
+        // ¸üĞÂÊı¾İ¿éµÄÊôĞÔ
         data_blocks[block_id].occupied = true;
         data_blocks[block_id].blockType = FILE_BLOCK;
         //data_blocks[block_id].block_id = i_number;
         //data_blocks[block_id].block_size = blockSize;
 
-        // å°†æ–‡ä»¶å†…å®¹ä»è¾“å…¥ç¼“å†²åŒºå¤åˆ¶åˆ°æ•°æ®å—ä¸­
+        // ½«ÎÄ¼şÄÚÈİ´ÓÊäÈë»º³åÇø¸´ÖÆµ½Êı¾İ¿éÖĞ
         if (input_buffer != nullptr) {
-            // å‡è®¾ content æ˜¯æ•°æ®å—çš„å†…å®¹ç¼“å†²åŒº
-            strcpy(data_blocks[block_id].content, input_buffer->c_str());
-            inodes_blocks[inode_id].file_size = input_buffer->size();
+            // ¼ÙÉè content ÊÇÊı¾İ¿éµÄÄÚÈİ»º³åÇø
+            string tmp;
+            if(flag+256<input_buffer->size()){
+                tmp = input_buffer->substr(flag,256);
+                flag +=256;
+                strcpy(data_blocks[block_id].content, tmp.c_str());
+            } else{
+                tmp = input_buffer->substr(flag);
+                strcpy(data_blocks[block_id].content, tmp.c_str());
+                //break;
+            }
+
+
+            //inodes_blocks[inode_id].file_size = input_buffer->size();
         }
 
-        // æ›´æ–°inodeçš„ç£ç›˜æŒ‡é’ˆï¼Œå°†åˆ†é…çš„æ•°æ®å—çš„æŒ‡é’ˆæ·»åŠ åˆ°å¯¹åº”çš„inodeçš„ç£ç›˜æŒ‡é’ˆä¸­
+        // ¸üĞÂinodeµÄ´ÅÅÌÖ¸Õë£¬½«·ÖÅäµÄÊı¾İ¿éµÄÖ¸ÕëÌí¼Óµ½¶ÔÓ¦µÄinodeµÄ´ÅÅÌÖ¸ÕëÖĞ
         inodes_blocks[inode_id].direct_block[i] = &data_blocks[block_id];
     }
 
     remaining_blocks -= num_blocks_to_allocate;
 
-    if (0 < remaining_blocks <= 32) //éœ€è¦åˆ†é…ä¸€ä¸ªä¸€çº§é—´æ¥å—
+    if (remaining_blocks>0&&remaining_blocks <= 32) //ĞèÒª·ÖÅäÒ»¸öÒ»¼¶¼ä½Ó¿é
     {
-        // åˆ†é…ä¸€ä¸ªé—´æ¥å—
+        // ·ÖÅäÒ»¸ö¼ä½Ó¿é
         int indirect_block_id = findFreeDataBlock();
         if (indirect_block_id == -1) {
-            cout << "æ²¡æœ‰å¯ç”¨çš„ç©ºé—²æ•°æ®å—ã€‚" << endl;
+            cout << "Ã»ÓĞ¿ÉÓÃµÄ¿ÕÏĞÊı¾İ¿é¡£" << endl;
             return -1;
         }
-        // æ ‡è®°æ•°æ®å—ä¸ºå·²å ç”¨
-        d_bitmap[indirect_block_id] = true;
+        // ±ê¼ÇÊı¾İ¿éÎªÒÑÕ¼ÓÃ
+        d_bitmap[indirect_block_id] = 1;
 
-        //ä¿®æ”¹é—´æ¥å—çš„ä¿¡æ¯
+        //ĞŞ¸Ä¼ä½Ó¿éµÄĞÅÏ¢
         data_blocks[indirect_block_id].occupied = true;
-        data_blocks[indirect_block_id].blockType = INDIRECT_BLOCK; // é—´æ¥å—
+        data_blocks[indirect_block_id].blockType = INDIRECT_BLOCK; // ¼ä½Ó¿é
         data_blocks[indirect_block_id].block_id = inode_id;
         data_blocks[indirect_block_id].block_size = blockSize;
 
-        // å°†åˆ†é…çš„é—´æ¥å—çš„æŒ‡é’ˆæ·»åŠ åˆ°inodeå—ä¿¡æ¯ä¸­
+        // ½«·ÖÅäµÄ¼ä½Ó¿éµÄÖ¸ÕëÌí¼Óµ½inode¿éĞÅÏ¢ÖĞ
         inodes_blocks[inode_id].disk_pointer.push_back(&data_blocks[indirect_block_id]);
-        //åˆ†é…æ•°æ®å—
+        //·ÖÅäÊı¾İ¿é
 
-        //è®¡ç®—éœ€è¦å‡ ä¸ªæ•°æ®å—å­˜å‚¨æ•°æ®
-        int num_blocks_to_allocate2 = min(remaining_blocks, 32); // æœ€å¤šåˆ†é…32ä¸ªæ•°æ®å—
+        //¼ÆËãĞèÒª¼¸¸öÊı¾İ¿é´æ´¢Êı¾İ
+        int num_blocks_to_allocate2 = min(remaining_blocks, 32); // ×î¶à·ÖÅä32¸öÊı¾İ¿é
 
-        // åˆ†é… num_blocks_to_allocate2 ä¸ªæ•°æ®å—
+        // ·ÖÅä num_blocks_to_allocate2 ¸öÊı¾İ¿é
         vector<int> block_ids = findFreeDataBlocks(num_blocks_to_allocate2);
         if (block_ids.size() < num_blocks_to_allocate2)
         {
-            cout << "æ²¡æœ‰è¶³å¤Ÿçš„å¯ç”¨ç©ºé—²æ•°æ®å—ã€‚" << endl;
+            cout << "Ã»ÓĞ×ã¹»µÄ¿ÉÓÃ¿ÕÏĞÊı¾İ¿é¡£" << endl;
             return -1;
         }
 
@@ -141,143 +150,170 @@ int Disk::allocateBlock_File(string file_name, string* input_buffer)
         {
             int block_id2 = block_ids[i];
 
-            // æ ‡è®°æ•°æ®å—ä¸ºå·²å ç”¨
-            d_bitmap[block_id2] = true;
+            // ±ê¼ÇÊı¾İ¿éÎªÒÑÕ¼ÓÃ
+            d_bitmap[block_id2] = 1;
 
-            // æ›´æ–°æ•°æ®å—çš„å±æ€§
+            // ¸üĞÂÊı¾İ¿éµÄÊôĞÔ
             data_blocks[block_id2].occupied = true;
             data_blocks[block_id2].blockType = FILE_BLOCK;
             data_blocks[block_id2].block_id = inode_id;
             data_blocks[block_id2].block_size = blockSize;
 
-            // å°†æ–‡ä»¶å†…å®¹ä»è¾“å…¥ç¼“å†²åŒºå¤åˆ¶åˆ°æ•°æ®å—ä¸­
-            if (input_buffer != nullptr) {
-                // å‡è®¾ content æ˜¯æ•°æ®å—çš„å†…å®¹ç¼“å†²åŒº
-                strcpy(data_blocks[block_id2].content, input_buffer->c_str());
-                inodes_blocks[inode_id].file_size = input_buffer->size();
+//            // ½«ÎÄ¼şÄÚÈİ´ÓÊäÈë»º³åÇø¸´ÖÆµ½Êı¾İ¿éÖĞ
+//            if (input_buffer != nullptr) {
+//                // ¼ÙÉè content ÊÇÊı¾İ¿éµÄÄÚÈİ»º³åÇø
+//                strcpy(data_blocks[block_id2].content, input_buffer->c_str());
+//                inodes_blocks[inode_id].file_size = input_buffer->size();
+//
+//            }
 
+            // ½«ÎÄ¼şÄÚÈİ´ÓÊäÈë»º³åÇø¸´ÖÆµ½Êı¾İ¿éÖĞ,ºÍÉÏÃæÊÇÒ»ÑùµÄ
+            string tmp;
+            if(flag+256<input_buffer->size()){
+                tmp = input_buffer->substr(flag,256);
+                flag +=256;
+                strcpy(data_blocks[block_id2].content, tmp.c_str());
+            } else{
+                tmp = input_buffer->substr(flag);
+                strcpy(data_blocks[block_id2].content, tmp.c_str());
+                break;
             }
-
-            // å°†åˆ†é…çš„æ•°æ®å—çš„æŒ‡é’ˆæ·»åŠ åˆ°é—´æ¥å—ä¸­
-            data_blocks[indirect_block_id].indirect_block[i] = &data_blocks[block_id2];
         }
 
         remaining_blocks = 0;
     }
 
-    if (remaining_blocks > 32) //éœ€è¦åˆ†é…å¤šä¸ªä¸€çº§é—´æ¥å—ï¼Œéœ€è¦ä¸€ä¸ªäºŒçº§é—´æ¥å—æ¥ç´¢å¼•ï¼ˆæ¨¡æ‹Ÿæƒ…å†µï¼šå¤§å°ä¸è¶…è¿‡256kçš„æ–‡ä»¶ï¼‰
+    /*
+     * Èç¹ûÊ£ÓàĞèÒªµÄ¿é¶ùÊı´óÓÚ32¾ÍĞèÒª·ÖÅäÒ»¸ö¶ş¼¶¼ä½Ó¿é¶ù
+     */
+    if (remaining_blocks > 32) //ĞèÒª·ÖÅä¶à¸öÒ»¼¶¼ä½Ó¿é£¬ĞèÒªÒ»¸ö¶ş¼¶¼ä½Ó¿éÀ´Ë÷Òı£¨Ä£ÄâÇé¿ö£º´óĞ¡²»³¬¹ı256kµÄÎÄ¼ş£©
     {
-        // åˆ†é…å‰©ä½™çš„æ•°æ®å—ï¼Œè¿™äº›æ•°æ®å—éœ€è¦é€šè¿‡é—´æ¥å—ä¸­çš„æŒ‡é’ˆæ¥æŒ‡å‘
-        int num_indirect_blocks = ceil(remaining_blocks / 32.0); // è®¡ç®—éœ€è¦çš„é—´æ¥å—æ•°
+        // ·ÖÅäÊ£ÓàµÄÊı¾İ¿é£¬ÕâĞ©Êı¾İ¿éĞèÒªÍ¨¹ı¼ä½Ó¿éÖĞµÄÖ¸ÕëÀ´Ö¸Ïò
+        int num_indirect_blocks = ceil(remaining_blocks / 32.0); // ¼ÆËãĞèÒªµÄ¼ä½Ó¿éÊı
 
-        // åˆ†é…ä¸€ä¸ªäºŒçº§é—´æ¥å—
+        // ·ÖÅäÒ»¸ö¶ş¼¶¼ä½Ó¿é
         int indirect2_block_id = findFreeDataBlock();
         if (indirect2_block_id == -1) {
-            cout << "æ²¡æœ‰å¯ç”¨çš„ç©ºé—²æ•°æ®å—ã€‚" << endl;
+            cout << "Ã»ÓĞ¿ÉÓÃµÄ¿ÕÏĞÊı¾İ¿é¡£" << endl;
             return -1;
         }
-        // æ ‡è®°æ•°æ®å—ä¸ºå·²å ç”¨
-        d_bitmap[indirect2_block_id] = true;
+        // ±ê¼ÇÊı¾İ¿éÎªÒÑÕ¼ÓÃ
+        d_bitmap[indirect2_block_id] = 1;
 
-        // æ›´æ–°æ•°æ®å—çš„å±æ€§
+        // ¸üĞÂÊı¾İ¿éµÄÊôĞÔ
         data_blocks[indirect2_block_id].occupied = true;
-        data_blocks[indirect2_block_id].blockType = INDIRECT_BLOCK; // äºŒçº§é—´æ¥å—
+        data_blocks[indirect2_block_id].blockType = INDIRECT_BLOCK; // ¶ş¼¶¼ä½Ó¿é
         data_blocks[indirect2_block_id].block_id = inode_id;
         data_blocks[indirect2_block_id].block_size = blockSize;
 
-        // å°†åˆ†é…çš„äºŒçº§é—´æ¥å—çš„æŒ‡é’ˆæ·»åŠ åˆ°å¯¹åº”çš„inodeçš„ç£ç›˜æŒ‡é’ˆä¸­
+        // ½«·ÖÅäµÄ¶ş¼¶¼ä½Ó¿éµÄÖ¸ÕëÌí¼Óµ½¶ÔÓ¦µÄinodeµÄ´ÅÅÌÖ¸ÕëÖĞ
         inodes_blocks[inode_id].disk_pointer.push_back(&data_blocks[indirect2_block_id]);
 
-        // åˆ†é…ä¸€çº§é—´æ¥å—å¹¶å°†æŒ‡é’ˆæ·»åŠ åˆ°äºŒçº§é—´æ¥å—ä¸­
+        // ·ÖÅäÒ»¼¶¼ä½Ó¿é²¢½«Ö¸ÕëÌí¼Óµ½¶ş¼¶¼ä½Ó¿éÖĞ
         for (int i = 0; i < num_indirect_blocks; i++)
         {
-            // åˆ†é…ä¸€ä¸ªé—´æ¥å—
+            // ·ÖÅäÒ»¸ö¼ä½Ó¿é
             int indirect_block_id = findFreeDataBlock();
             if (indirect_block_id == -1) {
-                cout << "æ²¡æœ‰å¯ç”¨çš„ç©ºé—²æ•°æ®å—ã€‚" << endl;
+                cout << "Ã»ÓĞ¿ÉÓÃµÄ¿ÕÏĞÊı¾İ¿é¡£" << endl;
                 return -1;
             }
-            // æ ‡è®°æ•°æ®å—ä¸ºå·²å ç”¨
-            d_bitmap[indirect_block_id] = true;
+            // ±ê¼ÇÊı¾İ¿éÎªÒÑÕ¼ÓÃ
+            d_bitmap[indirect_block_id] = 1;
 
-            // æ›´æ–°æ•°æ®å—çš„å±æ€§
+            // ¸üĞÂÊı¾İ¿éµÄÊôĞÔ
             data_blocks[indirect_block_id].occupied = true;
-            data_blocks[indirect_block_id].blockType = INDIRECT_BLOCK; // é—´æ¥å—
+            data_blocks[indirect_block_id].blockType = INDIRECT_BLOCK; // ¼ä½Ó¿é
             data_blocks[indirect_block_id].block_id = inode_id;
             data_blocks[indirect_block_id].block_size = blockSize;
 
-            // å°†åˆ†é…çš„ä¸€çº§é—´æ¥å—çš„æŒ‡é’ˆæ·»åŠ åˆ°äºŒçº§é—´æ¥å—ä¸­
+            // ½«·ÖÅäµÄÒ»¼¶¼ä½Ó¿éµÄÖ¸ÕëÌí¼Óµ½¶ş¼¶¼ä½Ó¿éÖĞ
             data_blocks[indirect2_block_id].indirect_block[i] = (&data_blocks[indirect_block_id]);
+            inodes_blocks[inode_id].disk_pointer.push_back(&data_blocks[indirect_block_id]);//´æ·Å¶ş¼¶¼ä½Ó¿é¶ùµÄÖ¸Õë
         }
 
-        for (int i = 1; i <= num_indirect_blocks; i++) // i=0 å­˜äº†æŒ‡å‘äºŒçº§é—´æ¥å—çš„æŒ‡é’ˆ
+        for (int i = 1; i <= num_indirect_blocks; i++) // i=0 ´æÁËÖ¸Ïò¶ş¼¶¼ä½Ó¿éµÄÖ¸Õë
         {
             for (int j = 0; j < min(remaining_blocks, 32); j++)
             {
-                // åˆ†é…ä¸€ä¸ªæ•°æ®å—
+                // ·ÖÅäÒ»¸öÊı¾İ¿é
                 int data_block_id = findFreeDataBlock();
                 if (data_block_id == -1) {
-                    cout << "æ²¡æœ‰å¯ç”¨çš„ç©ºé—²æ•°æ®å—ã€‚" << endl;
+                    cout << "Ã»ÓĞ¿ÉÓÃµÄ¿ÕÏĞÊı¾İ¿é¡£" << endl;
                     return -1;
                 }
-                // æ ‡è®°æ•°æ®å—ä¸ºå·²å ç”¨
-                d_bitmap[data_block_id] = true;
+                // ±ê¼ÇÊı¾İ¿éÎªÒÑÕ¼ÓÃ
+                d_bitmap[data_block_id] = 1;
 
-                // æ›´æ–°æ•°æ®å—çš„å±æ€§
+                // ¸üĞÂÊı¾İ¿éµÄÊôĞÔ
                 data_blocks[data_block_id].occupied = true;
                 data_blocks[data_block_id].blockType = FILE_BLOCK;
                 data_blocks[data_block_id].block_id = inode_id;
                 data_blocks[data_block_id].block_size = blockSize;
 
-                // å°†æ–‡ä»¶å†…å®¹ä»è¾“å…¥ç¼“å†²åŒºå¤åˆ¶åˆ°æ•°æ®å—ä¸­
-                if (input_buffer != nullptr) {
-                    strcpy(data_blocks[data_block_id].content, input_buffer->c_str());
-                    inodes_blocks[inode_id].file_size = input_buffer->size();
+//                // ½«ÎÄ¼şÄÚÈİ´ÓÊäÈë»º³åÇø¸´ÖÆµ½Êı¾İ¿éÖĞ
+//                if (input_buffer != nullptr) {
+//                    strcpy(data_blocks[data_block_id].content, input_buffer->c_str());
+//                    inodes_blocks[inode_id].file_size = input_buffer->size();
+//                }
+                string tmp;
+                if(flag+256<input_buffer->size()){
+                    tmp = input_buffer->substr(flag,256);
+                    flag +=256;
+                    strcpy(data_blocks[data_block_id].content, tmp.c_str());
+                } else{
+                    tmp = input_buffer->substr(flag);
+                    strcpy(data_blocks[data_block_id].content, tmp.c_str());
+                    break;
                 }
 
-                // å°†æŒ‡å‘åˆ†é…çš„æ•°æ®å—çš„æŒ‡é’ˆæ·»åŠ åˆ°ä¸€çº§é—´æ¥å—ä¸­
+                // ½«Ö¸Ïò·ÖÅäµÄÊı¾İ¿éµÄÖ¸ÕëÌí¼Óµ½Ò»¼¶¼ä½Ó¿éÖĞ
                 inodes_blocks[inode_id].disk_pointer[i]->indirect_block[j] = &data_blocks[data_block_id];
+
             }
 
             remaining_blocks -= 32;
         }
     }
+    return inode_id;
 }
 
-/*åˆ†é…å‡½æ•°ä¸­ç”¨åˆ°çš„å­å‡½æ•°ï¼ˆæŸ¥è¯¢ç©ºé—²ç£ç›˜å—ï¼‰*/
-//æ‰¾ç©ºé—²inode çš„å‡½æ•°
+/*·ÖÅäº¯ÊıÖĞÓÃµ½µÄ×Óº¯Êı£¨²éÑ¯¿ÕÏĞ´ÅÅÌ¿é£©*/
+//ÕÒ¿ÕÏĞinode µÄº¯Êı
 int Disk::findFreeInode() {
-    // éå†inodeä½è§†å›¾
+    // ±éÀúinodeÎ»ÊÓÍ¼
     for (int i = 0; i < I_BMAP_NUM; i++) {
-        // å¦‚æœæ‰¾åˆ°ä¸€ä¸ªç©ºé—²çš„inode
+        // Èç¹ûÕÒµ½Ò»¸ö¿ÕÏĞµÄinode
         if (!i_bitmap[i]) {
-            // è¿”å›inodeçš„ç´¢å¼•
+            // ·µ»ØinodeµÄË÷Òı
+            i_bitmap[i]= 1;//±íÊ¾±»Õ¼ÓÃ
             return i;
         }
     }
 
-    // æ²¡æœ‰æ‰¾åˆ°ç©ºé—²çš„inode
+    // Ã»ÓĞÕÒµ½¿ÕÏĞµÄinode
     return -1;
 }
 vector<int> Disk::findFreeInodes(int num_inodes)
 {
     vector<int> free_inodes;
 
-    // éå†inodeä½è§†å›¾
+    // ±éÀúinodeÎ»ÊÓÍ¼
     for (int i = 0; i < I_BMAP_NUM; i++) {
-        // å¦‚æœæ‰¾åˆ°ä¸€ä¸ªç©ºé—²çš„inode
+        // Èç¹ûÕÒµ½Ò»¸ö¿ÕÏĞµÄinode
         if (!i_bitmap[i]) {
-            // å°†inodeçš„ç´¢å¼•æ·»åŠ åˆ°ç»“æœä¸­
+            // ½«inodeµÄË÷ÒıÌí¼Óµ½½á¹ûÖĞ
             free_inodes.push_back(i);
+            i_bitmap[i]= 1;//±íÊ¾±»Õ¼ÓÃ
 
-            // å¦‚æœå·²ç»æ‰¾åˆ°è¶³å¤Ÿæ•°é‡çš„inodeï¼Œç»“æŸå¾ªç¯
+            // Èç¹ûÒÑ¾­ÕÒµ½×ã¹»ÊıÁ¿µÄinode£¬½áÊøÑ­»·
             if (free_inodes.size() == num_inodes) {
                 break;
             }
         }
     }
 
-    // å¦‚æœæ²¡æœ‰æ‰¾åˆ°è¶³å¤Ÿæ•°é‡çš„ç©ºé—²inodeï¼Œè¿”å›ä¸€ä¸ªç©ºçš„å‘é‡
+    // Èç¹ûÃ»ÓĞÕÒµ½×ã¹»ÊıÁ¿µÄ¿ÕÏĞinode£¬·µ»ØÒ»¸ö¿ÕµÄÏòÁ¿
     if (free_inodes.size() < num_inodes) {
         free_inodes.clear();
     }
@@ -285,44 +321,46 @@ vector<int> Disk::findFreeInodes(int num_inodes)
     return free_inodes;
 }
 
-//æ‰¾ç©ºé—²æ•°æ®å— çš„å‡½æ•°
+//ÕÒ¿ÕÏĞÊı¾İ¿é µÄº¯Êı
 int Disk::findFreeDataBlock()
 {
-    // éå†æ•°æ®å—ä½è§†å›¾
+    // ±éÀúÊı¾İ¿éÎ»ÊÓÍ¼
     for (int i = 0; i < D_BMAP_NUM; i++) {
-        // å¦‚æœæ‰¾åˆ°ä¸€ä¸ªç©ºé—²çš„æ•°æ®å—
+        // Èç¹ûÕÒµ½Ò»¸ö¿ÕÏĞµÄÊı¾İ¿é
         if (!d_bitmap[i]) {
-            // è¿”å›æ•°æ®å—çš„ç´¢å¼•
+            // ·µ»ØÊı¾İ¿éµÄË÷Òı
+            d_bitmap[i]= 1;
             return i;
         }
     }
 
-    // æ²¡æœ‰æ‰¾åˆ°ç©ºé—²çš„æ•°æ®å—
+    // Ã»ÓĞÕÒµ½¿ÕÏĞµÄÊı¾İ¿é
     return -1;
 }
 
 vector<int> Disk::findFreeDataBlocks(int num_blocks)
 {
     /*
-     * åœ¨ä½è§†å›¾ä¸­å¯»æ‰¾ç©ºä½™çš„å—å„¿ï¼Œæ‰¾åˆ°è¶³å¤Ÿçš„å—å„¿çš„è¯å°±è¿”å›è¿™äº›å—å„¿çš„å·
+     * ÔÚÎ»ÊÓÍ¼ÖĞÑ°ÕÒ¿ÕÓàµÄ¿é¶ù£¬ÕÒµ½×ã¹»µÄ¿é¶ùµÄ»°¾Í·µ»ØÕâĞ©¿é¶ùµÄºÅ
      */
     vector<int> free_blocks;
 
-    // éå†æ•°æ®å—ä½è§†å›¾
+    // ±éÀúÊı¾İ¿éÎ»ÊÓÍ¼
     for (int i = 0; i < D_BMAP_NUM; i++) {
-        // å¦‚æœæ‰¾åˆ°ä¸€ä¸ªç©ºé—²çš„æ•°æ®å—
+        // Èç¹ûÕÒµ½Ò»¸ö¿ÕÏĞµÄÊı¾İ¿é
         if (!d_bitmap[i]) {
-            // å°†æ•°æ®å—ç´¢å¼•æ·»åŠ åˆ°ç©ºé—²å—åˆ—è¡¨ä¸­
+            // ½«Êı¾İ¿éË÷ÒıÌí¼Óµ½¿ÕÏĞ¿éÁĞ±íÖĞ
             free_blocks.push_back(i);
+            d_bitmap[i]= 1;//Õ¼ÓÃ
 
-            // å¦‚æœå·²ç»æ‰¾åˆ°äº†è¶³å¤Ÿçš„ç©ºé—²å—
+            // Èç¹ûÒÑ¾­ÕÒµ½ÁË×ã¹»µÄ¿ÕÏĞ¿é
             if (free_blocks.size() == num_blocks) {
-                // è¿”å›æ‰€æœ‰ç›¸å…³çš„æ•°æ®å—ç´¢å¼•
+                // ·µ»ØËùÓĞÏà¹ØµÄÊı¾İ¿éË÷Òı
                 return free_blocks;
             }
         }
     }
 
-    // å¦‚æœæ²¡æœ‰æ‰¾åˆ°è¶³å¤Ÿçš„ç©ºé—²å—ï¼Œåˆ™è¿”å›ä¸€ä¸ªç©ºçš„åˆ—è¡¨
+    // Èç¹ûÃ»ÓĞÕÒµ½×ã¹»µÄ¿ÕÏĞ¿é£¬Ôò·µ»ØÒ»¸ö¿ÕµÄÁĞ±í
     return vector<int>();
 }

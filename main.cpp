@@ -16,7 +16,8 @@ int main() {
         cout << "5. 删除文件/目录\n";
         cout << "6. 查看磁盘状态\n";
         cout << "7. 返回上级目录\n";
-        cout << "8. 退出\n";
+        cout << "8. 读取文件\n";
+        cout << "9. 退出\n";
 
         cout << "请输入你的选项: ";
         cin >> choice;
@@ -52,6 +53,11 @@ int main() {
                 my_file.go_back();
                 break;
             case 8:
+                cout<<"请输入要读取的文件名:"<<endl;
+                cin>>file_name;
+                cout<<my_file.get_file_content(file_name)<<endl;
+                break;
+            case 9:
                 flag = false;
                 break;
             default:

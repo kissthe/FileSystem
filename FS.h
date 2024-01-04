@@ -75,8 +75,8 @@ public:
     FileManagement(Disk* disk);//构造函数
     bool remove(string file_name);
     bool create(FileType file_type, string file_name);
-    string get_file_content();
-    string get_dir_content(int i_number);//获取当下的目录信息，之所以有返回值是因为要返回给GUI那边
+    string get_file_content(string  file_name);
+
 
     void cd_dir(string file_name);//进入目录
 
@@ -84,7 +84,6 @@ public:
 
     void print_dir_details();//打印出来当前的目录
 
-    void sort_index();//将目录项排序
 
     void print_current_dir();//打印出当前的工作目录
     bool rename_file(string old_name,string new_name);
@@ -95,6 +94,7 @@ public:
 
     void update_buffer();//更新操作，每次读之前都得用该操作一次
     void go_back();//返回上一级目录
+    void update_file_buffer(int file_number);
 };
 
 class Disk {

@@ -5,12 +5,16 @@ void FileManagement::print_current_dir() {
 }
 void FileManagement::update_buffer() {
     disk->read_dir(ope_inode);
-    //cout<<"????????????????????"<<endl;
+    //cout<<"updating buffer now!"<<endl;
     dir_input_buffer=disk->dir_output_buffer;
     parent_inode=disk->parent_inode_number;
-    disk->dir_output_buffer.clear();//è¯»å–å®Œæ¯•åæ¸…ç©ºç£ç›˜ç¼“å†²åŒº
+    disk->dir_output_buffer.clear();//¶ÁÈ¡Íê±ÏºóÇå¿Õ´ÅÅÌ»º³åÇø
+}
 
-
+void FileManagement::update_file_buffer(int file_number){
+    disk->read_file(file_number);
+    input_buffer=disk->output_buffer;//»º³åÇøµÄ´«µİ
+    disk->output_buffer.clear();//Çå¿ÕÔ­À´µÄ»º³åÇø
 }
 
 void FileManagement::print_dir_details() {
@@ -37,13 +41,13 @@ void FileManagement::print_dir_details() {
 
 bool FileManagement::rename_file(string old_name, string new_name) {
     /*
-     * ä¿®æ”¹æ–‡ä»¶å
+     * ĞŞ¸ÄÎÄ¼şÃû
      */
     for(auto i:dir_input_buffer){
         if(old_name==i.file_name){
             for(auto j:dir_input_buffer){
                 if(new_name==j.file_name){
-                    cout<<"é‡å¤"<<endl;
+                    cout<<"ÖØ¸´"<<endl;
                     return false;
                 }
             }
@@ -55,18 +59,28 @@ bool FileManagement::rename_file(string old_name, string new_name) {
 
 bool FileManagement::create(FileType file_type,string file_name) {
     /*
-     * æ–°å»ºæ–‡ä»¶å¤¹ã€æ–‡ä»¶å…¶å®éƒ½æ˜¯ç›¸å½“äºè®©ç£ç›˜åˆ†é…ç©ºé—´ï¼Œå› æ­¤ç›´æ¥è°ƒç”¨ç£ç›˜çš„å‡½æ•°å³å¯
-     * trueä»£è¡¨æ™®é€šæ–‡ä»¶,falseä»£è¡¨ç›®å½•æ–‡ä»¶
+     * ĞÂ½¨ÎÄ¼ş¼Ğ¡¢ÎÄ¼şÆäÊµ¶¼ÊÇÏàµ±ÓÚÈÃ´ÅÅÌ·ÖÅä¿Õ¼ä£¬Òò´ËÖ±½Óµ÷ÓÃ´ÅÅÌµÄº¯Êı¼´¿É
+     * true´ú±íÆÕÍ¨ÎÄ¼ş,false´ú±íÄ¿Â¼ÎÄ¼ş
      */
+    update_buffer();
+    for(auto i:dir_input_buffer){
+        if(i.file_name==file_name){
+            cout<<"file_name already exists!"<<endl;
+            return false;
+        }
+    }
     int ci_number;
     if(file_type==FILE_TYPE){
+        cin.get();
+        //cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         cout <<"input file content:";
-        cin>>input_buffer;
+        getline(cin,input_buffer);
+
         ci_number= disk->allocateBlock_File(file_name,&input_buffer);
         disk->add_index_in_dir(ope_inode,ci_number);
     } else{
        ci_number= disk->new_allocate_dir(file_name);
-       cout<<"allocate finish:"<<ci_number<<endl;
+       //cout<<"allocate finish:"<<ci_number<<endl;
        disk->add_index_in_dir(ope_inode,ci_number);
        disk->add_index_in_dir(ci_number,ope_inode);
 
@@ -75,7 +89,7 @@ bool FileManagement::create(FileType file_type,string file_name) {
 
 bool FileManagement::remove(string file_name) {
     /*
-     * å›æ”¶ç£ç›˜ç©ºé—´ï¼Œåˆ é™¤å¯¹åº”inodeèŠ‚ç‚¹
+     * »ØÊÕ´ÅÅÌ¿Õ¼ä£¬É¾³ı¶ÔÓ¦inode½Úµã
      */
     update_buffer();
     for(auto i:dir_input_buffer){
@@ -98,25 +112,43 @@ bool FileManagement::recycle_file(string file_name)  {
 }
 
 
-string FileManagement::get_file_content() {
-    for (auto i:input_buffer) {
-        file_content.push_back(i);
+string FileManagement::get_file_content(string file_name) {
+    update_buffer();
+    int file_number=-1;
+    for(auto i:dir_input_buffer){
+        if(i.file_name==file_name&&i.file_type==FILE_TYPE){
+            file_number=i.i_number;
+            break;
+        }
     }
+    if(file_number==-1){
+        cout<<"file did not exist!"<<endl;
+        exit(1);
+    }
+    update_file_buffer(file_number);
+    file_content=input_buffer;
+    if(!file_content.empty()){
+        //cout<<"file content:"<<file_content<<endl;
+        return file_content;
+    } else{
+        cout<<"the file is empty!!"<<endl;
+    }
+
     return file_content;
 }
 
 void FileManagement::cd_dir(string file_name) {
     //bool exist= false;
     /*
-     * æ ¹æ®æ–‡ä»¶å¤¹åç§°è¿›å…¥ç›¸åº”çš„ç›®å½•
-     * è¿”å›çš„å°±æ˜¯è¿›å…¥ç›®å½•çš„ç›¸å…³ä¿¡æ¯ï¼Œç”¨stringå­˜å‚¨ï¼Œå¯ä»¥åœ¨GUIç«¯æ˜¾ç¤º
+     * ¸ù¾İÎÄ¼ş¼ĞÃû³Æ½øÈëÏàÓ¦µÄÄ¿Â¼
+     * ·µ»ØµÄ¾ÍÊÇ½øÈëÄ¿Â¼µÄÏà¹ØĞÅÏ¢£¬ÓÃstring´æ´¢£¬¿ÉÒÔÔÚGUI¶ËÏÔÊ¾
      */
     update_buffer();
     for(auto i:dir_input_buffer){
         if(i.file_name==file_name){
             /*
-             * åœ¨è¿™é‡Œè¦ä¿®æ”¹ä¸€ä¸‹å½“å‰ç›®å½•å’Œä¸Šçº§ç›®å½•
-             * åœ¨è¿™é‡Œè¦ä¿®æ”¹ä¸€ä¸‹å½“å‰ç›®å½•å’Œä¸Šçº§ç›®å½•çš„inodeå·
+             * ÔÚÕâÀïÒªĞŞ¸ÄÒ»ÏÂµ±Ç°Ä¿Â¼ºÍÉÏ¼¶Ä¿Â¼
+             * ÔÚÕâÀïÒªĞŞ¸ÄÒ»ÏÂµ±Ç°Ä¿Â¼ºÍÉÏ¼¶Ä¿Â¼µÄinodeºÅ
              */
             parent_inode=ope_inode;
             ope_inode=i.i_number;
@@ -133,21 +165,23 @@ void FileManagement::cd_dir(string file_name) {
 void FileManagement::go_back() {
     update_buffer();
     string tmp=disk->get_file_name(ope_inode);
+    if(ope_inode!=0)//Èç¹û²»ÊÇ¸ùÄ¿Â¼µÄ»°
+        for(int i=0;i<=tmp.size();i++)current_dir.pop_back();
     ope_inode=parent_inode;
-    for(int i=0;i<=tmp.size();i++)current_dir.pop_back();
+
 }
 
-// æŒ‰ç…§æ–‡ä»¶åè¿›è¡Œæ¯”è¾ƒ
+// °´ÕÕÎÄ¼şÃû½øĞĞ±È½Ï
 bool compareByName(const Inode& a, const Inode& b) {
     return a.file_name[0] < b.file_name[0];
 }
 
-// æŒ‰ç…§æ–‡ä»¶å¤§å°è¿›è¡Œæ¯”è¾ƒ
+// °´ÕÕÎÄ¼ş´óĞ¡½øĞĞ±È½Ï
 bool compareBySize(const Inode& a, const Inode& b) {
     return a.file_size < b.file_size;
 }
 
-// æŒ‰ç…§ä¿®æ”¹æ—¥æœŸè¿›è¡Œæ¯”è¾ƒ
+// °´ÕÕĞŞ¸ÄÈÕÆÚ½øĞĞ±È½Ï
 bool compareByModifiedTime(const Inode& a, const Inode& b) {
     return a.modified_time.compare(b.modified_time) < 0;
 }
@@ -158,8 +192,8 @@ void FileManagement::show_disk_status() {
 
 void FileManagement::sort_index(int choice) {
     /*
-     * åˆ é™¤ç´¢å¼•é¡¹ï¼Œå¯ä»¥ä½¿ç”¨äºŒåˆ†æŸ¥æ‰¾å¹¶ä¸”åˆ é™¤
-     * ä½¿ç”¨STLç®—æ³•ï¼ŒæŒ‰ç…§å…³é”®å­—è¿›è¡Œå¿«é€Ÿæ’åº
+     * É¾³ıË÷ÒıÏî£¬¿ÉÒÔÊ¹ÓÃ¶ş·Ö²éÕÒ²¢ÇÒÉ¾³ı
+     * Ê¹ÓÃSTLËã·¨£¬°´ÕÕ¹Ø¼ü×Ö½øĞĞ¿ìËÙÅÅĞò
      */
     switch (choice) {
         case 1:
@@ -176,12 +210,12 @@ void FileManagement::sort_index(int choice) {
 
 
 FileManagement::FileManagement(Disk*root):disk(root){
-    //åˆšå¼€å§‹å·¥ä½œåœ¨æ ¹ç›®å½•
+    //¸Õ¿ªÊ¼¹¤×÷ÔÚ¸ùÄ¿Â¼
     ope_inode=0;
     parent_inode=0;
     current_dir="/";
 }
 
-// ä¸ºäº†ç¤ºä¾‹ç›®çš„ï¼Œè¿™é‡Œæ²¡æœ‰å¯¹ disk è¿›è¡Œåˆå§‹åŒ–
-// ä½ å¯èƒ½éœ€è¦æ ¹æ®å®é™…æƒ…å†µåœ¨æ„é€ å‡½æ•°ä¸­è¿›è¡Œ disk çš„åˆå§‹åŒ–
+// ÎªÁËÊ¾ÀıÄ¿µÄ£¬ÕâÀïÃ»ÓĞ¶Ô disk ½øĞĞ³õÊ¼»¯
+// Äã¿ÉÄÜĞèÒª¸ù¾İÊµ¼ÊÇé¿öÔÚ¹¹Ôìº¯ÊıÖĞ½øĞĞ disk µÄ³õÊ¼»¯
 
