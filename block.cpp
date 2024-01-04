@@ -182,3 +182,9 @@ Disk::Disk(int blockCount,int blockSize) : blockCount(blockCount), blockSize(blo
 
 }
 
+
+Disk::~Disk() {
+    // 在析构函数中进行资源清理工作，如果有的话
+    // 例如，释放动态分配的内存等
+    // 根据需要，在析构函数中添加其他清理逻辑
+}
