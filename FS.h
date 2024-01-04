@@ -63,8 +63,15 @@ private:
     string dir_content;//存放得到的目录项信息
     string file_content;//存放得到的文件内容
     string current_dir;//当前处于的路径
+
+    Inode copy_tmp;//临时变量
     vector<Inode>copy_number;//拷贝的文件头
     string copy_file_content;//拷贝的文件内容
+
+    bool is_cut;
+    int cut_parent_number;//剪切专用
+
+
 
 public:
     /*
@@ -100,9 +107,11 @@ public:
     void update_buffer();//更新操作，每次读之前都得用该操作一次
     void go_back();//返回上一级目录
     void update_file_buffer(int file_number);
+    void copy_directory();
+    void copy_file();
     void copy(string file_name);//复制
     void paste();//粘贴
-    void cut();//剪切
+    void cut(string file_name);//剪切
 };
 
 class Disk {

@@ -18,7 +18,10 @@ int main() {
         cout << "7. 返回上级目录\n";
         cout << "8. 读取文件\n";
         cout << "9. 排序显示\n";
-        cout << "10. 退出\n";
+        cout << "10. 复制\n";
+        cout << "11. 粘贴\n";
+        cout << "12. 粘贴\n";
+        cout << "13. 退出\n";
 
         cout << "请输入你的选项: ";
         cin >> choice;
@@ -64,6 +67,19 @@ int main() {
                 my_file.print_sort_dir(choice);
                 break;
             case 10:
+                cout<<"输入需要复制的文件名:";
+                cin>>file_name;
+                my_file.copy(file_name);
+                break;
+            case 11:
+                my_file.paste();
+                break;
+            case 12:
+                cout<<"输入需要剪切的文件名:";
+                cin>>file_name;
+                my_file.cut(file_name);
+                break;
+            case 13:
                 flag = false;
                 break;
             default:
