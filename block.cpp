@@ -1,54 +1,184 @@
 #include "FS.h"
+string Disk::get_file_name(int i_number) {
+    return inodes_blocks[i_number].file_name;
+}
 void Disk::read_file(int i_number) {
-    /*
-     * çŸ¥é“å…·ä½“åˆ†é…ç­–ç•¥æ‰èƒ½å¤ŸçŸ¥é“æ€ä¹ˆè¯»
-     */
-    //for(auto iter:)
+    for(auto i:inodes_blocks[i_number].direct_block){
+        if(i!= nullptr){
+            output_buffer+=i->content;
+        }
+    }
+    if(inodes_blocks[i_number].disk_pointer.size()==1){
+        for(int i=0;inodes_blocks[i_number].disk_pointer[0]->indirect_block[i]!= nullptr;i++){
+            output_buffer+=inodes_blocks[i_number].disk_pointer[0]->indirect_block[i]->content;
+        }
+    }else{
+        /*
+         * ´æÔÚ¶ş¼¶Ë÷ÒıµÄÇé¿ö
+         */
+        for(int i=1;i<inodes_blocks[i_number].disk_pointer.size();i++){
+            for(int j=0;j<32&&inodes_blocks[i_number].disk_pointer[i]->indirect_block[j]!= nullptr;j++){
+                output_buffer+=inodes_blocks[i_number].disk_pointer[i]->indirect_block[j]->content;
+            }
+        }
+    }
+
 }
 void Disk::read_dir(int i_number) {
     /*
-     * å°†ç›®å½•çš„ä¿¡æ¯ä»¿ä½›ç¼“å†²åŒºä¸­
+     * ½«Ä¿Â¼µÄĞÅÏ¢·ÅÈë»º³åÇøÖĞ
      */
+
+    parent_inode_number=inodes_blocks[i_number].direct_block[0]->index[0];//¼ÇÂ¼Ò»ÏÂÉÏ¼¶½Úµã
+    for(auto i:inodes_blocks[i_number].direct_block){
+        if(i!= nullptr){
+            for(int j=0;j<i->index_number;j++){
+                if(i->index[j]!=parent_inode_number){//ÕâÑùµÄ»°¾Í²»»á°ÑÉÏ¼¶½Úµã·ÅÈë»º³åÇøÖĞ
+                        dir_output_buffer.push_back(inodes_blocks[i->index[j]]);//·ÅÈëÄ¿Â¼¶ÔÓ¦µÄ»º³åÇøÖĞ
+                }
+            }
+        }
+
+    }
 }
 string Disk::modify_time() {
-    // è·å–å½“å‰æ—¶é—´ç‚¹
+    // »ñÈ¡µ±Ç°Ê±¼äµã
     auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-    // å°†æ—¶é—´ç‚¹è½¬æ¢ä¸ºæœ¬åœ°æ—¶é—´ç»“æ„
+    // ½«Ê±¼äµã×ª»»Îª±¾µØÊ±¼ä½á¹¹
     std::tm* localTime = std::localtime(&currentTime);
 
-    // åˆ›å»ºä¸€ä¸ªå­—ç¬¦æ•°ç»„æ¥å­˜å‚¨æ—¶é—´å­—ç¬¦ä¸²
+    // ´´½¨Ò»¸ö×Ö·ûÊı×éÀ´´æ´¢Ê±¼ä×Ö·û´®
     const int bufferSize = 80;
     char buffer[bufferSize];
 
-    // ä½¿ç”¨ std::strftime å°†æ—¶é—´ç»“æ„æ ¼å¼åŒ–ä¸ºå­—ç¬¦ä¸²
+    // Ê¹ÓÃ std::strftime ½«Ê±¼ä½á¹¹¸ñÊ½»¯Îª×Ö·û´®
     std::strftime(buffer, bufferSize, "%Y/%m/%d %H:%M", localTime);
-    return buffer;//è¿”å›å½“å‰æ—¥æœŸæ—¶é—´å­—ç¬¦ä¸²
+    return buffer;//·µ»Øµ±Ç°ÈÕÆÚÊ±¼ä×Ö·û´®
 }
 
 bool Disk::modify_file_name(int i_number, string new_name) {
     /*
-     * æŠŠå¯¹åº”æ–‡ä»¶/æ–‡ä»¶å¤¹çš„inodeä¿¡æ¯æ›´æ”¹
+     * °Ñ¶ÔÓ¦ÎÄ¼ş/ÎÄ¼ş¼ĞµÄinodeĞÅÏ¢¸ü¸Ä
      */
+    inodes_blocks[i_number].file_name=new_name;
+    return true;
 }
 
-void Disk::add_index(int i_number) {
+void Disk::add_index_in_dir(int pi_number,int ci_number) {
     /*
-     * æ·»åŠ å­ç›®å½•çš„è¯ä¸ç”¨é‡æ–°åˆ†é…
+     * ÈÃpi_numberµÄÄ¿Â¼ÏÂÃæÓĞci_numberµÄÌõÄ¿
+     * ÕâÁ©number¶¼ÊÇinodeºÅ
+     */
+
+    for(int i=0;i<12;i++){
+        //if(inodes_blocks[pi_number].direct_block[i]!= nullptr){}
+        //int count = inodes_blocks[pi_number].direct_block[i]->index_number;//µ±Ç°´ÅÅÌ¿é¶ù´æ·ÅµÄÄ¿Â¼ÊıÁ¿
+
+        if(inodes_blocks[pi_number].direct_block[i]== nullptr){
+
+            //ÕâÀïĞèÒªÖØĞÂÕÒÒ»¸ö¿ÕÏĞ¿é²¢ÇÒÖ¸ÏòËü£¬²¢ÔÚ¿ÕÏĞ¿é¶ùÖĞÌí¼ÓÄ¿Â¼
+            inodes_blocks[pi_number].direct_block[i]=&data_blocks[findFreeDataBlock()];
+            //
+            inodes_blocks[pi_number].direct_block[i]->index[0]=ci_number;//°ÑĞÂ´´½¨µÄÄ¿Â¼£¬ÎÄ¼şµÄi_numberºÅ¼ÓÈë½øÈ¥
+            //
+            inodes_blocks[pi_number].direct_block[i]->index_number++;//´æ·ÅÄ¿Â¼µÄÊıÁ¿+1
+            break;
+        } else if(inodes_blocks[pi_number].direct_block[i]->index_number<64){
+            /*
+             * Èç¹û¿é¶ù²»ÊÇ¿ÕµÄ»°£¬ÊÔ×ÅÔÚËûÀïÃæÌî³äÒ»¸öĞÂµÄÄ¿Â¼
+             */
+            int count = inodes_blocks[pi_number].direct_block[i]->index_number;
+
+            inodes_blocks[pi_number].direct_block[i]->index[count]=ci_number;
+
+            inodes_blocks[pi_number].direct_block[i]->index_number++;
+            count++;
+
+            break;
+        } else cout<<"add index in dir failed"<<endl;
+    }
+    inodes_blocks[pi_number].modified_time=modify_time();//¸ü¸ÄÉÏ¼¶Ä¿Â¼µÄĞŞ¸ÄÊ±¼ä
+    //cout<<"add index in dir success!"<<endl;
+}
+void Disk::delete_index_in_dir(int pi_number, int ci_number) {
+    /*
+     * É¾³ıpi_numberÏÂÃæci_number¶ÔÓ¦µÄÌõÄ¿
      */
     for(int i=0;i<12;i++){
-        if(inodes_blocks[i_number].dir_arr[i]== nullptr){
-            //è¿™é‡Œéœ€è¦é‡æ–°æ‰¾ä¸€ä¸ªç©ºé—²å—
-            //inodes_blocks[i_number].dir_arr[i]=;
-
-            //å¤„ç†å®Œæ¯•åbreak
-
-        } else{
-            if(inodes_blocks[i_number].dir_arr[i]->index.size()<10){
-                //å¤„ç†ï¼Œæ³¨æ„æ­¤äº‹è¦å†™å…¥inodeä¸­
+        if(inodes_blocks[pi_number].direct_block[i]== nullptr)return;
+        int count = inodes_blocks[pi_number].direct_block[i]->index_number;//µ±Ç°´ÅÅÌ¿é¶ù´æ·ÅµÄÄ¿Â¼ÊıÁ¿
+            /*
+             * Ò»¸öÒ»¸öÖ¸Õë½øĞĞÌõÄ¿µÄ²éÕÒ
+             */
+            for(int j=0;j<count;j++){
+                if(inodes_blocks[pi_number].direct_block[i]->index[j]==ci_number){
+                    /*
+                     * ÕÒµ½Æ¥ÅäµÄÁË£¬ĞèÒªÉ¾³ı¸ÃÔªËØ£¬²¢°ÑºóÃæµÄÔªËØÍùÇ°ÒÆ¶¯Ò»¸ñ
+                     */
+                    for(int k=j;k<count-1;k++){
+                        inodes_blocks[pi_number].direct_block[i]->index[k]=inodes_blocks[pi_number].direct_block[i]->index[k+1];
+                    }
+                    inodes_blocks[pi_number].direct_block[i]->index_number--;
+                    break;
+                }
             }
-        }
-
 
     }
 }
+
+
+bool Disk::modify_file_recycled(int i_number) {
+    inodes_blocks[i_number].recycled= true;//¸ÄÎª»ØÊÕ×´Ì¬
+}
+
+int Disk::get_CurDirChild_number(int i_number) {
+    int sum=1;
+    for(auto i:inodes_blocks[i_number].direct_block){
+        if(i!= nullptr)sum+=i->index_number-1;
+    }
+    return sum;
+}
+
+Disk::Disk(int blockCount,int blockSize) : blockCount(blockCount), blockSize(blockSize) {
+    // ³õÊ¼»¯Î»Ê¾Í¼,¸ùÄ¿Â¼Ò»¶¨Òª³õÊ¼»¯ÁË
+    i_bitmap[0]= 1;
+    for (int i = 1; i < I_BMAP_NUM; ++i) {
+        i_bitmap[i] = 0;
+    }
+    d_bitmap[0]= 1;
+    for (int i = 1; i < D_BMAP_NUM; ++i) {
+        d_bitmap[i] = 0;
+    }
+
+    //³õÊ¼»¯inodeÇøÓò,ÒªÓĞ¸ùÄ¿Â¼µÄÎÄ¼şÍ·
+    inodes_blocks[0].file_name="/";
+    inodes_blocks[0].i_number=0;
+    inodes_blocks[0].recycled= false;
+    inodes_blocks[0].modified_time="2024/01/01 00:00";
+    inodes_blocks[0].direct_block[0]=&data_blocks[0];//Ä¬ÈÏ°ÑµÚÒ»¿é¶ù·Ö¸ø¸ùÄ¿Â¼
+    inodes_blocks[0].file_type=DIRECTORY_TYPE;
+    //³õÊ¼»¯Êı¾İÇøÓò£¬ÒªÓĞ¸ùÄ¿Â¼´æÔÚ
+    data_blocks[0].index_number=1;//´æ·ÅÁË¸ùÄ¿Â¼£¬Òò´ËÊıÁ¿Îª1
+    data_blocks[0].occupied= true;
+    data_blocks[0].blockType=INDEX_BLOCK;
+    data_blocks[0].index[0]=0;//¸ùÄ¿Â¼µÄÉÏ¼¶Ä¿Â¼»¹ÊÇ¸ùÄ¿Â¼
+
+    for (int i = 1; i < DATA_BLOCK_NUM; ++i) {
+        data_blocks[i].occupied = false;
+        /*
+         * °Ñ´æ·ÅÊı¾İµÄÇøÓòÈ«²¿ÖÃÎª0
+         */
+        memset(data_blocks[i].content,0,256);
+        memset(data_blocks[i].index,0,64);
+        memset(data_blocks[i].indirect_block, 0,32);
+        // ¸ù¾İĞèÒª¶ÔÆäËû×Ö¶Î½øĞĞ³õÊ¼»¯
+    }
+
+    // ³õÊ¼»¯»ØÊÕÕ¾Êı×é
+    for (int i = 0; i < 20; ++i) {
+        arr[i] = 0;
+    }
+
+}
+
