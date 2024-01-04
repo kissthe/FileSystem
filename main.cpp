@@ -17,7 +17,8 @@ int main() {
         cout << "6. 查看磁盘状态\n";
         cout << "7. 返回上级目录\n";
         cout << "8. 读取文件\n";
-        cout << "9. 退出\n";
+        cout << "9. 排序显示\n";
+        cout << "10. 退出\n";
 
         cout << "请输入你的选项: ";
         cin >> choice;
@@ -58,6 +59,11 @@ int main() {
                 cout<<my_file.get_file_content(file_name)<<endl;
                 break;
             case 9:
+                cout<<"sort:1.name 2.size 3.time"<<endl;
+                cin>>choice;
+                my_file.print_sort_dir(choice);
+                break;
+            case 10:
                 flag = false;
                 break;
             default:

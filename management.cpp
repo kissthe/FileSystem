@@ -18,11 +18,12 @@ void FileManagement::update_file_buffer(int file_number){
 }
 
 void FileManagement::print_dir_details() {
-    cout<<"ope_node:"<<ope_inode<<endl;
-    cout<<"current_dir_child_number:"<<disk->get_CurDirChild_number(ope_inode)<<endl;
+//    cout<<"ope_node:"<<ope_inode<<endl;
+//    cout<<"current_dir_child_number:"<<disk->get_CurDirChild_number(ope_inode)<<endl;
     cout<<"FileName"<<"\t"<<"ModifiedTime"<<"\t"<<"Type"<<"\t"<<"Size"<<endl;
     update_buffer();
     //cout<<"update success!"<<endl;
+
     if(dir_input_buffer.size()==0){
         cout<<"current file is empty"<<endl;
         return;
@@ -36,6 +37,27 @@ void FileManagement::print_dir_details() {
             }
         //}
     }
+
+}
+
+void FileManagement::print_sort_dir(int choice) {
+    update_buffer();
+    if(dir_input_buffer.empty()){
+        cout<<"current file is empty"<<endl;
+        return;
+    }
+    vector<Inode>tmp=dir_input_buffer;
+    sort_index(choice,tmp);
+    for(auto i:tmp){
+        //if(i.i_number!=dir_input_buffer.front().i_number){
+        if(i.file_type==FILE_TYPE){
+            cout<<i.file_name<<"\t"<<i.modified_time<<"\t"<<"File"<<"\t"<<i.file_size<<endl;
+        } else{
+            cout<<i.file_name<<"\t"<<i.modified_time<<"\t"<<"Dir"<<"\t"<<endl;
+        }
+        //}
+    }
+    cout<<"FileName"<<"\t"<<"ModifiedTime"<<"\t"<<"Type"<<"\t"<<"Size"<<endl;
 
 }
 
@@ -190,20 +212,20 @@ void FileManagement::show_disk_status() {
     disk->displayDiskStatus();
 }
 
-void FileManagement::sort_index(int choice) {
+void FileManagement::sort_index(int choice,vector<Inode>&tmp) {
     /*
      * 删除索引项，可以使用二分查找并且删除
      * 使用STL算法，按照关键字进行快速排序
      */
     switch (choice) {
         case 1:
-            sort(disk->dir_output_buffer.begin(), disk->dir_output_buffer.end(), compareByName);
+            sort(tmp.begin(), tmp.end(), compareByName);
             break;
         case 2:
-            sort(disk->dir_output_buffer.begin(), disk->dir_output_buffer.end(), compareBySize);
+            sort(tmp.begin(), tmp.end(), compareBySize);
             break;
         case 3:
-            sort(disk->dir_output_buffer.begin(), disk->dir_output_buffer.end(), compareByModifiedTime);
+            sort(tmp.begin(), tmp.end(), compareByModifiedTime);
             break;
     }
 }
@@ -215,6 +237,37 @@ FileManagement::FileManagement(Disk*root):disk(root){
     parent_inode=0;
     current_dir="/";
 }
+
+void FileManagement::copy(string file_name) {
+    for(auto i:dir_input_buffer){
+        if(i.file_name==file_name){
+            if(i.file_type==FILE_TYPE){
+                copy_number[0]=i;
+                copy_file_content= get_file_content(file_name);
+            } else{
+                copy_number[0]=i;
+
+            }
+        }
+    }
+}
+
+void FileManagement::paste() {
+    if(copy_number.empty())return;
+    if(copy_number[0].file_type==FILE_TYPE){
+        int ci_number=disk->allocateBlock_File(copy_number[0].file_name,&copy_file_content);
+        disk->add_index_in_dir(ope_inode,ci_number);
+    } else{
+
+    }
+
+}
+
+void FileManagement::cut() {
+
+}
+
+
 
 // 为了示例目的，这里没有对 disk 进行初始化
 // 你可能需要根据实际情况在构造函数中进行 disk 的初始化

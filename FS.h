@@ -63,6 +63,9 @@ private:
     string dir_content;//存放得到的目录项信息
     string file_content;//存放得到的文件内容
     string current_dir;//当前处于的路径
+    vector<Inode>copy_number;//拷贝的文件头
+    string copy_file_content;//拷贝的文件内容
+
 public:
     /*
      * 对文件,目录的一些操作，主要是更改inode属性
@@ -77,6 +80,8 @@ public:
     bool create(FileType file_type, string file_name);
     string get_file_content(string  file_name);
 
+    void print_sort_dir(int choice);//以不同排序方式呈现
+
 
     void cd_dir(string file_name);//进入目录
 
@@ -90,11 +95,14 @@ public:
 
     void show_disk_status();
 
-    void sort_index(int choice);
+    void sort_index(int choice,vector<Inode>&tmp);
 
     void update_buffer();//更新操作，每次读之前都得用该操作一次
     void go_back();//返回上一级目录
     void update_file_buffer(int file_number);
+    void copy(string file_name);//复制
+    void paste();//粘贴
+    void cut();//剪切
 };
 
 class Disk {
