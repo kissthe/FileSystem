@@ -239,33 +239,90 @@ FileManagement::FileManagement(Disk*root):disk(root){
 }
 
 void FileManagement::copy(string file_name) {
+    is_cut= false;
+    update_buffer();
     for(auto i:dir_input_buffer){
         if(i.file_name==file_name){
             if(i.file_type==FILE_TYPE){
-                copy_number[0]=i;
+                copy_tmp=i;
                 copy_file_content= get_file_content(file_name);
             } else{
-                copy_number[0]=i;
-
+                copy_tmp=i;
+            /*
+             * 这里可能还会需要添加一些东西
+             */
             }
         }
     }
+    cout<<"copy finish!"<<endl;
+    cout<<"copy details:"<<copy_tmp.file_name<<endl;
+}
+void FileManagement::cut(string file_name) {
+    is_cut= true;
+    update_buffer();
+    for(auto i:dir_input_buffer){
+        if(i.file_name==file_name){
+            if(i.file_type==FILE_TYPE){
+                copy_tmp=i;
+                copy_file_content= get_file_content(file_name);
+                cut_parent_number=ope_inode;
+                break;
+            } else{
+                copy_tmp=i;
+                cut_parent_number=ope_inode;
+                break;
+                /*
+                 * 这里可能还会需要添加一些东西
+                 */
+            }
+        }
+    }
+    cout<<"copy finish!"<<endl;
+    cout<<"copy details:"<<copy_tmp.file_name<<endl;
+}
+void FileManagement::copy_file(){
+    disk->read_file(copy_tmp.i_number);
+    copy_file_content=disk->output_buffer;//缓冲区的传递
+    disk->output_buffer.clear();//清空原来的缓冲区
+    int ci_number= disk->allocateBlock_File(copy_tmp.file_name,&copy_file_content);
+    disk->add_index_in_dir(ope_inode,ci_number);
+}
+
+
+void FileManagement::copy_directory(){
+    create(DIRECTORY_TYPE,copy_tmp.file_name);
+    cd_dir(copy_tmp.file_name);
+
+    disk->read_dir(copy_tmp.i_number);
+    copy_number=disk->dir_output_buffer;
+    disk->dir_output_buffer.clear();
+
+    for(auto i:copy_number){
+        copy_tmp=i;
+        if(copy_tmp.file_type==DIRECTORY_TYPE){
+            copy_directory();
+        } else{
+            copy_file();
+        }
+    }
+    go_back();
+
 }
 
 void FileManagement::paste() {
-    if(copy_number.empty())return;
-    if(copy_number[0].file_type==FILE_TYPE){
-        int ci_number=disk->allocateBlock_File(copy_number[0].file_name,&copy_file_content);
-        disk->add_index_in_dir(ope_inode,ci_number);
-    } else{
-
+    int flag=copy_tmp.i_number;
+    //if(copy_number.empty())return;
+    if(copy_tmp.file_type==FILE_TYPE){
+        copy_file();
+    } else copy_directory();
+    if(is_cut){//如果是剪切的话删除原来的块儿
+        disk->delete_index_in_dir(cut_parent_number,flag);
+        disk->deleteBlock(flag);
     }
 
 }
 
-void FileManagement::cut() {
 
-}
 
 
 
