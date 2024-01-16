@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <cstring>
 #include <cmath>
+#include <cctype>
+#include <cstdlib>
 #define INODE_NUM 100
 #define I_BMAP_NUM 100
 #define D_BMAP_NUM 512
